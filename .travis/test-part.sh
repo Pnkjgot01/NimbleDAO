@@ -7,10 +7,10 @@ readonly test_part=${TEST_PART:-}
 
 case "$test_part" in
 All)
-    npx buidler test --no-compile
+    npx hardhat test --no-compile
     ;;
 Sol6)
-    npx buidler test --no-compile --config buidlerConfigSol6.js
+    npx hardhat test --no-compile --config hardhatConfigSol6.js
     ;;
 Coverage)
     if [[ $TRAVIS_EVENT_TYPE != "push" ]]; then
