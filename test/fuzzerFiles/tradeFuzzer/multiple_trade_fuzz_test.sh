@@ -2,5 +2,5 @@
 
 for _ in {1..100}
 do
-    npx buidler test --no-compile test/sol6/tradeFuzzTests.js
+    npx hardhat test --no-compile test/sol6/tradeFuzzTests.js
 done

@@ -9,11 +9,11 @@ while getopts "f:a" arg; do
 done
 
 if [ -n "$FILE" ]; then
-  npx buidler test --no-compile $FILE
+  npx hardhat test --no-compile $FILE
 elif [ "$ALL" = true ]; then
   echo "Running all tests..."
-  npx buidler test --no-compile
+  npx hardhat test --no-compile
 else
   echo "Running sol6 tests..." 
-  npx buidler test --config ./buidlerConfigSol6.js --no-compile 
+  npx hardhat test --config ./hardhatConfigSol6.js --no-compile 
 fi

@@ -30,9 +30,9 @@ Public facing interfaces for nimble network (folder: contracts/sol6):
 `./tst.sh -a` (Run sol4, sol5, sol6 tests)
 
 ### Example
-`npx buidler test --no-compile ./test/sol6/nimbleNetwork.js`
+`npx hardhat test --no-compile ./test/sol6/nimbleNetwork.js`
 
-## Coverage with `buidler-coverage`
+## Coverage with `hardhat-coverage`
 1. Run `./coverage.sh`
 2. Use `-f` for running a specific test file.
 
