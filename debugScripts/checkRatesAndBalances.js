@@ -45,7 +45,7 @@ let ratesAdd = [];      // one per reserve
 let sanityRateAdd = []; // one per reserve
 let ERC20Inst = [];
 let ERC20Adds = [];
-let kncInst;
+let nmbInst;
 
 //contract instances
 let Network;
