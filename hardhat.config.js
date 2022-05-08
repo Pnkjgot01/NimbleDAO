@@ -120,7 +120,7 @@ export const solc = {
   optimizer: require("./solcOptimiserSettings.js")
 };
 export const paths = {
-  sources: "./contracts/sol6",
+  sources: "./contracts",
   tests: "./test/",
 };
 export const mocha = {

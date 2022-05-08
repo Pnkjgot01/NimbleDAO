@@ -8,11 +8,11 @@ done
 export NODE_OPTIONS=--max-old-space-size=4096
 
 npx hardhat clean
-npx hardhat compile --config ./hardhatCoverageSol4.js
+npx hardhat compile --config ./hardhatCoverage.js
 
 if [ -n "$FILE" ]
 then
-    npx hardhat coverage --config ./hardhatConfigSol6.js --testfiles $FILE --solcoverjs ".solcover.js" --temp ""
+    npx hardhat coverage --config ./hardhatConfig.js --testfiles $FILE --solcoverjs ".solcover.js" --temp ""
 else
-    npx hardhat coverage --config ./hardhatConfigSol6.js --testfiles "" --solcoverjs ".solcover.js" --temp ""
+    npx hardhat coverage --config ./hardhatConfig.js --testfiles "" --solcoverjs ".solcover.js" --temp ""
 fi
