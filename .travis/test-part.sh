@@ -10,7 +10,7 @@ All)
     npx hardhat test --no-compile
     ;;
 Sol6)
-    npx hardhat test --no-compile --config hardhatConfigSol6.js
+    npx hardhat test --no-compile --config hardhatConfig.js
     ;;
 Coverage)
     if [[ $TRAVIS_EVENT_TYPE != "push" ]]; then
