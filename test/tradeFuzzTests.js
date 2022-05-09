@@ -1,12 +1,12 @@
 const TestToken = artifacts.require("Token.sol");
 const MockReserve = artifacts.require("MockReserve.sol");
-const MockDao = artifacts.require("MockKyberDao.sol");
+const MockDao = artifacts.require("MockNimbleDao.sol");
 const MockGasHelper = artifacts.require("MockGasHelper.sol");
-const KyberNetwork = artifacts.require("KyberNetwork.sol");
-const KyberNetworkProxy = artifacts.require("KyberNetworkProxy.sol");
-const FeeHandler = artifacts.require("KyberFeeHandler.sol");
-const MatchingEngine = artifacts.require("KyberMatchingEngine.sol");
-const RateHelper = artifacts.require("KyberRateHelper.sol");
+const NimbleNetwork = artifacts.require("NimbleNetwork.sol");
+const NimbleNetworkProxy = artifacts.require("NimbleNetworkProxy.sol");
+const FeeHandler = artifacts.require("NimbleFeeHandler.sol");
+const MatchingEngine = artifacts.require("NimbleMatchingEngine.sol");
+const RateHelper = artifacts.require("NimbleRateHelper.sol");
 
 const Helper = require("../helper.js");
 const nwHelper = require("./networkHelper.js");
@@ -90,12 +90,12 @@ contract('TradeFuzzTests', function(accounts) {
 
         // init storage and network
         storage = await nwHelper.setupStorage(admin);
-        network = await KyberNetwork.new(admin, storage.address);
+        network = await NimbleNetwork.new(admin, storage.address);
         await storage.setNetworkContract(network.address, {from: admin});
         await storage.addOperator(operator, {from: admin});
 
-        networkProxy = await KyberNetworkProxy.new(admin);
-        await networkProxy.setKyberNetwork(network.address, {from: admin});
+        networkProxy = await NimbleNetworkProxy.new(admin);
+        await networkProxy.setNimbleNetwork(network.address, {from: admin});
 
         // init feeHandler
         KNC = await TestToken.new("kyber network crystal", "KNC", 18);
@@ -104,7 +104,7 @@ contract('TradeFuzzTests', function(accounts) {
         // init matchingEngine
         matchingEngine = await MatchingEngine.new(admin);
         await matchingEngine.setNetworkContract(network.address, {from: admin});
-        await matchingEngine.setKyberStorage(storage.address, {from: admin});
+        await matchingEngine.setNimbleStorage(storage.address, {from: admin});
         await storage.setFeeAccountedPerReserveType(true, true, true, false, true, true, {from: admin});
         await storage.setEntitledRebatePerReserveType(true, false, true, false, true, true, {from: admin});
 
@@ -122,8 +122,8 @@ contract('TradeFuzzTests', function(accounts) {
         await network.setContracts(feeHandler.address, matchingEngine.address,
             gasHelperAdd.address, {from: admin});
         await network.addOperator(operator, {from: admin});
-        await network.addKyberProxy(networkProxy.address, {from: admin});
-        await network.setKyberDaoContract(kyberDao.address, {from: admin});
+        await network.addNimbleProxy(networkProxy.address, {from: admin});
+        await network.setNimbleDaoContract(kyberDao.address, {from: admin});
         //set params, enable network
         await network.setParams(gasPrice, negligibleRateDiffBps, {from: admin});
         await network.setEnable(true, {from: admin});

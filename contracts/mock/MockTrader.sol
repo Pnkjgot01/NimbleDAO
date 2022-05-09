@@ -1,15 +1,15 @@
 pragma solidity 0.6.6;
 
-import "../IKyberNetworkProxy.sol";
+import "../INimbleNetworkProxy.sol";
 
 
 contract MockTrader {
     IERC20 internal constant ETH_TOKEN_ADDRESS = IERC20(
         0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
     );
-    IKyberNetworkProxy public kyberNetworkProxy;
+    INimbleNetworkProxy public kyberNetworkProxy;
 
-    constructor(IKyberNetworkProxy _kyberNetworkProxy) public {
+    constructor(INimbleNetworkProxy _kyberNetworkProxy) public {
         kyberNetworkProxy = _kyberNetworkProxy;
     }
 

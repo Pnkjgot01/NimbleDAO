@@ -1,9 +1,9 @@
 const TestToken = artifacts.require("Token.sol");
-const MockKyberDao = artifacts.require("MockKyberDaoTestHandleWithdrawal.sol");
-const MockKyberDaoWithdrawFailed = artifacts.require("MockKyberDaoWithdrawFailed.sol");
-const StakingContract = artifacts.require("MockKyberStaking.sol");
-const MaliciousStaking = artifacts.require("MockKyberStakingMalicious.sol");
-const MaliciousDaoReentrancy = artifacts.require("MockMaliciousKyberDaoReentrancy.sol");
+const MockNimbleDao = artifacts.require("MockNimbleDaoTestHandleWithdrawal.sol");
+const MockNimbleDaoWithdrawFailed = artifacts.require("MockNimbleDaoWithdrawFailed.sol");
+const StakingContract = artifacts.require("MockNimbleStaking.sol");
+const MaliciousStaking = artifacts.require("MockNimbleStakingMalicious.sol");
+const MaliciousDaoReentrancy = artifacts.require("MockMaliciousNimbleDaoReentrancy.sol");
 const Helper = require("../helper.js");
 
 const BN = web3.utils.BN;
@@ -25,10 +25,10 @@ let victor;
 let loi;
 let mike;
 
-contract('KyberStaking', function(accounts) {
+contract('NimbleStaking', function(accounts) {
   before("one time init", async() => {
     kyberDao = accounts[1];
-    kncToken = await TestToken.new("Kyber Network Crystal", "KNC", 18);
+    kncToken = await TestToken.new("Nimble Network Crystal", "KNC", 18);
     victor = accounts[2];
     loi = accounts[3];
     mike = accounts[4];
@@ -1021,8 +1021,8 @@ contract('KyberStaking', function(accounts) {
       Helper.assertEqual(expectedStakingBal, await kncToken.balanceOf(stakingContract.address), "staking balance is not changed as expected");
     });
 
-    it("Test withdraw should call KyberDao handleWithdrawal as expected", async function() {
-      let dao = await MockKyberDao.new(
+    it("Test withdraw should call NimbleDao handleWithdrawal as expected", async function() {
+      let dao = await MockNimbleDao.new(
         blocksToSeconds(10),
         blockToTimestamp(currentBlock + 10),
       );
@@ -1102,7 +1102,7 @@ contract('KyberStaking', function(accounts) {
     });
 
     it("Test handleWithdrawal should revert sender is not staking", async() => {
-      let dao = await MockKyberDao.new(
+      let dao = await MockNimbleDao.new(
         blocksToSeconds(10),
         blockToTimestamp(currentBlock + 10),
       );
@@ -1122,7 +1122,7 @@ contract('KyberStaking', function(accounts) {
     });
 
     it("Test withdraw gas usages", async function() {
-      let dao = await MockKyberDao.new(
+      let dao = await MockNimbleDao.new(
         blocksToSeconds(10),
         blockToTimestamp(currentBlock + 10),
       );
@@ -2363,7 +2363,7 @@ contract('KyberStaking', function(accounts) {
       verifyStakerData(stakerData, mulPrecision(100), 0, mike);
     });
 
-    it("Test get staker data for current epoch called by KyberDao", async function() {
+    it("Test get staker data for current epoch called by NimbleDao", async function() {
       kyberDao = accounts[1];
       await deployStakingContract(15, currentBlock + 15);
 
@@ -2732,8 +2732,8 @@ contract('KyberStaking', function(accounts) {
   };
 
   describe("Test Withdrawal shouldn't revert", () => {
-    it("Test withdraw shouldn't revert when handleWithdrawal in KyberDao reverted", async function() {
-      let dao = await MockKyberDaoWithdrawFailed.new(
+    it("Test withdraw shouldn't revert when handleWithdrawal in NimbleDao reverted", async function() {
+      let dao = await MockNimbleDaoWithdrawFailed.new(
         blocksToSeconds(10),
         blockToTimestamp(currentBlock + 10)
       );
@@ -2751,13 +2751,13 @@ contract('KyberStaking', function(accounts) {
       await Helper.increaseNextBlockTimestamp(
         blocksToSeconds(epochPeriod)
       );
-      // shoule call KyberDao, but shouldn't revert, all data is updated
+      // shoule call NimbleDao, but shouldn't revert, all data is updated
       await withdrawAndCheckData(victor, mulPrecision(100), false);
       kyberDao = accounts[1];
     });
 
-    it("Test withdraw shouldn't revert when handleWithdrawal in KyberDao reverted - delegation", async function() {
-      let dao = await MockKyberDaoWithdrawFailed.new(
+    it("Test withdraw shouldn't revert when handleWithdrawal in NimbleDao reverted - delegation", async function() {
+      let dao = await MockNimbleDaoWithdrawFailed.new(
         blocksToSeconds(10),
         blockToTimestamp(currentBlock + 10)
       );
@@ -2777,7 +2777,7 @@ contract('KyberStaking', function(accounts) {
       );
       await stakingContract.delegate(loi, {from: victor});
 
-      // shoule call KyberDao, but shouldn't revert, all data is updated
+      // shoule call NimbleDao, but shouldn't revert, all data is updated
       await withdrawAndCheckData(victor, mulPrecision(100), false);
       // delegate back to self and check
       await stakingContract.delegate(victor, {from: victor});
@@ -2787,7 +2787,7 @@ contract('KyberStaking', function(accounts) {
       kyberDao = accounts[1];
     });
 
-    it("Test withdraw shouldn't revert when KyberDao does not have handleWithdrawl func", async function() {
+    it("Test withdraw shouldn't revert when NimbleDao does not have handleWithdrawl func", async function() {
       kyberDao = accounts[1];
       await deployStakingContract(10, currentBlock + 10);
 
@@ -2806,7 +2806,7 @@ contract('KyberStaking', function(accounts) {
       await withdrawAndCheckData(victor, mulPrecision(100), false);
     });
 
-    it("Test withdraw shouldn't revert with re-entrancy from KyberDao", async() => {
+    it("Test withdraw shouldn't revert with re-entrancy from NimbleDao", async() => {
       await deployStakingContract(10, currentBlock + 10);
       let maliciousDao = await MaliciousDaoReentrancy.new(
         blocksToSeconds(10),
@@ -2819,7 +2819,7 @@ contract('KyberStaking', function(accounts) {
 
       await maliciousDao.deposit(mulPrecision(80));
 
-      // delay to epoch 1, so withdraw will call KyberDao to handle withdrawal
+      // delay to epoch 1, so withdraw will call NimbleDao to handle withdrawal
       await Helper.setNextBlockTimestamp(
         blockToTimestamp(startBlock)
       );

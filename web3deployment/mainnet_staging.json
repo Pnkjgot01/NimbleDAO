@@ -9,7 +9,7 @@
       "listed": true
     },
     "KNC": {
-      "name": "KyberNetwork",
+      "name": "NimbleNetwork",
       "decimals": 18,
       "address": "0xdd974D5C2e2928deA5F71b9825b8b646686BD200",
       "minimalRecordResolution": "1000000000000000",
@@ -464,7 +464,7 @@
     }
   },
   "permission": {
-    "KyberNetwork": {
+    "NimbleNetwork": {
       "admin": "0xd0643BC0D0C879F175556509dbcEe9373379D5C3",
       "operator": [
         "0xd0643BC0D0C879F175556509dbcEe9373379D5C3"
@@ -479,7 +479,7 @@
       ],
       "alerter": []
     },
-    "KyberReserve": {
+    "NimbleReserve": {
       "admin": "0xd0643BC0D0C879F175556509dbcEe9373379D5C3",
       "operator": [
         "0x8C3151b751F2409697E35F62D016713593F64Eef"

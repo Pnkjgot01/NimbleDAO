@@ -1,7 +1,7 @@
 const MockConversionRates = artifacts.require("MockConversionRates");
 const TestToken = artifacts.require("TestToken");
 const WethToken = artifacts.require("WethToken");
-const Reserve = artifacts.require("KyberFprReserveV2");
+const Reserve = artifacts.require("NimbleFprReserveV2");
 const MockSanityRates = artifacts.require("MockSanityRates");
 const NoPayableFallback = artifacts.require("NoPayableFallback");
 
@@ -65,7 +65,7 @@ let qtyBuyStepY = [];
 let qtySellStepX = [];
 let qtySellStepY = [];
 
-contract('KyberFprReserveV2', function(accounts) {
+contract('NimbleFprReserveV2', function(accounts) {
   before("Global setup", async function () {
     // set account addresses
     admin = accounts[0];
@@ -2288,7 +2288,7 @@ contract('KyberFprReserveV2', function(accounts) {
 
     it("Test set contract functions revert not admin", async() => {
       await expectRevert(
-        reserve.setKyberNetwork(network, {from: operator}),
+        reserve.setNimbleNetwork(network, {from: operator}),
         "only admin"
       )
       await expectRevert(
@@ -2307,7 +2307,7 @@ contract('KyberFprReserveV2', function(accounts) {
 
     it("Test set contract functions revert params are invalid", async() => {
       await expectRevert(
-        reserve.setKyberNetwork(zeroAddress),
+        reserve.setNimbleNetwork(zeroAddress),
         "kyberNetwork 0"
       );
       await expectRevert(
@@ -2323,17 +2323,17 @@ contract('KyberFprReserveV2', function(accounts) {
     });
 
     it("Test set kyberNetwork successful, data changes, event emits", async() => {
-      let tx = await reserve.setKyberNetwork(network, {from: admin});
-      expectEvent(tx, "SetKyberNetworkAddress", {
+      let tx = await reserve.setNimbleNetwork(network, {from: admin});
+      expectEvent(tx, "SetNimbleNetworkAddress", {
         network: network,
       });
       Helper.assertEqual(network, await reserve.kyberNetwork());
-      tx = await reserve.setKyberNetwork(accounts[0], {from: admin});
-      expectEvent(tx, "SetKyberNetworkAddress", {
+      tx = await reserve.setNimbleNetwork(accounts[0], {from: admin});
+      expectEvent(tx, "SetNimbleNetworkAddress", {
         network: accounts[0],
       });
       Helper.assertEqual(accounts[0], await reserve.kyberNetwork());
-      await reserve.setKyberNetwork(network, {from: admin});
+      await reserve.setNimbleNetwork(network, {from: admin});
     });
 
     it("Test set conversion rate successful, data changes, event emits", async() => {

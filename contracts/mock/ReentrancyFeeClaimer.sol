@@ -1,21 +1,21 @@
 pragma solidity 0.6.6;
 
-import "../IKyberNetworkProxy.sol";
+import "../INimbleNetworkProxy.sol";
 import "../utils/Utils5.sol";
-import "../IKyberFeeHandler.sol";
+import "../INimbleFeeHandler.sol";
 
 /// @dev contract to call trade when claimPlatformFee
 contract ReentrancyFeeClaimer is Utils5 {
-    IKyberNetworkProxy kyberProxy;
-    IKyberFeeHandler feeHandler;
+    INimbleNetworkProxy kyberProxy;
+    INimbleFeeHandler feeHandler;
     IERC20 token;
     uint256 amount;
 
     bool isReentrancy = true;
 
     constructor(
-        IKyberNetworkProxy _kyberProxy,
-        IKyberFeeHandler _feeHandler,
+        INimbleNetworkProxy _kyberProxy,
+        INimbleFeeHandler _feeHandler,
         IERC20 _token,
         uint256 _amount
     ) public {

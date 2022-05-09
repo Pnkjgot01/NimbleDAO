@@ -1,6 +1,6 @@
 const TestToken = artifacts.require("TestToken.sol");
 // using mock contract here, as we need to read the hasInited value
-const MockKyberStaking = artifacts.require("MockKyberStaking.sol");
+const MockNimbleStaking = artifacts.require("MockNimbleStaking.sol");
 
 const Helper = require("../helper.js");
 const BN = web3.utils.BN;
@@ -25,8 +25,8 @@ let kyberStaking;
 let epochPeriod = new BN(1000);
 let firstBlockTimestamp;
 
-contract('KyberStaking simulator', async (accounts) => {
-    before('one time init: Stakers, KyberStaking, KNC token', async() => {
+contract('NimbleStaking simulator', async (accounts) => {
+    before('one time init: Stakers, NimbleStaking, KNC token', async() => {
         admin = accounts[1];
         daoOperator = accounts[2];
         stakers = accounts.slice(5,); // 5 stakers
@@ -35,7 +35,7 @@ contract('KyberStaking simulator', async (accounts) => {
         // prepare kyber staking
         firstBlockTimestamp = await Helper.getCurrentBlockTime();
 
-        kyberStaking = await MockKyberStaking.new(
+        kyberStaking = await MockNimbleStaking.new(
             kncToken.address,
             epochPeriod,
             firstBlockTimestamp + 1000,

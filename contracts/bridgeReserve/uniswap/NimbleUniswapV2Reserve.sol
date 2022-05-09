@@ -4,13 +4,13 @@ import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router01.sol";
 
-import "../../IKyberReserve.sol";
+import "../../INimbleReserve.sol";
 import "../../IERC20.sol";
 import "../../utils/Withdrawable3.sol";
 import "../../utils/Utils5.sol";
 import "../../utils/zeppelin/SafeERC20.sol";
 
-contract KyberUniswapV2Reserve is IKyberReserve, Withdrawable3, Utils5 {
+contract NimbleUniswapV2Reserve is INimbleReserve, Withdrawable3, Utils5 {
     using SafeERC20 for IERC20;
 
     uint256 public constant DEFAULT_FEE_BPS = 0;
@@ -49,7 +49,7 @@ contract KyberUniswapV2Reserve is IKyberReserve, Withdrawable3, Utils5 {
 
     event EtherReceival(address indexed sender, uint256 amount);
 
-    event KyberNetworkSet(address kyberNetwork);
+    event NimbleNetworkSet(address kyberNetwork);
 
     constructor(
         IUniswapV2Router01 _uniswapRouter,
@@ -157,11 +157,11 @@ contract KyberUniswapV2Reserve is IKyberReserve, Withdrawable3, Utils5 {
         }
     }
 
-    function setKyberNetwork(address _kyberNetwork) external onlyAdmin {
+    function setNimbleNetwork(address _kyberNetwork) external onlyAdmin {
         require(_kyberNetwork != address(0));
         if (kyberNetwork != _kyberNetwork) {
             kyberNetwork = _kyberNetwork;
-            emit KyberNetworkSet(kyberNetwork);
+            emit NimbleNetworkSet(kyberNetwork);
         }
     }
 

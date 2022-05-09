@@ -110,8 +110,8 @@ const input = {
     "Withdrawable.sol" : fs.readFileSync(contractPath + 'Withdrawable.sol', 'utf8'),
     "Utils.sol" : fs.readFileSync(contractPath + 'Utils.sol', 'utf8'),
     "Utils2.sol" : fs.readFileSync(contractPath + 'Utils2.sol', 'utf8'),
-    "KyberReserveInterface.sol" : fs.readFileSync(contractPath + 'KyberReserveInterface.sol', 'utf8'),
-    "KyberOasisReserve.sol" : fs.readFileSync(oasisContractPath + 'KyberOasisReserve.sol', 'utf8')
+    "NimbleReserveInterface.sol" : fs.readFileSync(contractPath + 'NimbleReserveInterface.sol', 'utf8'),
+    "NimbleOasisReserve.sol" : fs.readFileSync(oasisContractPath + 'NimbleOasisReserve.sol', 'utf8')
 };
 
 
@@ -142,7 +142,7 @@ async function main() {
 
     [kyberOasisReserveAddress, kyberOasisReserveContract] = await deployContract(
         output,
-        "KyberOasisReserve.sol:KyberOasisReserve",
+        "NimbleOasisReserve.sol:NimbleOasisReserve",
         [kyberNetworkAddress, otcAddress, wethTokenAddress, adminAddress, feeBps]
     );
 

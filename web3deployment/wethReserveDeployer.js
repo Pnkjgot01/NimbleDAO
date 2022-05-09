@@ -110,8 +110,8 @@ const input = {
     "Withdrawable.sol" : fs.readFileSync(contractPath + 'Withdrawable.sol', 'utf8'),
     "Utils.sol" : fs.readFileSync(contractPath + 'Utils.sol', 'utf8'),
     "Utils2.sol" : fs.readFileSync(contractPath + 'Utils2.sol', 'utf8'),
-    "KyberReserveInterface.sol" : fs.readFileSync(contractPath + 'KyberReserveInterface.sol', 'utf8'),
-    "KyberWethReserve.sol" : fs.readFileSync(wethContractPath + 'KyberWethReserve.sol', 'utf8')
+    "NimbleReserveInterface.sol" : fs.readFileSync(contractPath + 'NimbleReserveInterface.sol', 'utf8'),
+    "NimbleWethReserve.sol" : fs.readFileSync(wethContractPath + 'NimbleWethReserve.sol', 'utf8')
 };
 
 const ethAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
@@ -138,7 +138,7 @@ async function main() {
 
     [kyberWethReserveAddress, kyberWethReserveContract] = await deployContract(
         output,
-        "KyberWethReserve.sol:KyberWethReserve",
+        "NimbleWethReserve.sol:NimbleWethReserve",
         [kyberNetworkAddress, wethTokenAddress, adminAddress]
     );
 

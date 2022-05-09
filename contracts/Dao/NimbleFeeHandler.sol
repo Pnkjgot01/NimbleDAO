@@ -2,22 +2,22 @@ pragma solidity 0.6.6;
 
 import "../utils/Utils5.sol";
 import "../utils/zeppelin/ReentrancyGuard.sol";
-import "../IKyberDao.sol";
-import "../IKyberFeeHandler.sol";
-import "../IKyberNetworkProxy.sol";
-import "../ISimpleKyberProxy.sol";
+import "../INimbleDao.sol";
+import "../INimbleFeeHandler.sol";
+import "../INimbleNetworkProxy.sol";
+import "../ISimpleNimbleProxy.sol";
 import "../IBurnableToken.sol";
 import "./ISanityRate.sol";
 import "../utils/zeppelin/SafeMath.sol";
 import "./DaoOperator.sol";
 
 /**
- * @title IKyberProxy
+ * @title INimbleProxy
  *  This interface combines two interfaces.
  *  It is needed since we use one function from each of the interfaces.
  *
  */
-interface IKyberProxy is IKyberNetworkProxy, ISimpleKyberProxy {
+interface INimbleProxy is INimbleNetworkProxy, ISimpleNimbleProxy {
     // empty block
 }
 
@@ -45,7 +45,7 @@ interface IKyberProxy is IKyberNetworkProxy, ISimpleKyberProxy {
  *      2. Network Fee distribution: Per epoch kyberFeeHandler contract reads BRR distribution percentage 
  *          from kyberDao. When the data expires, kyberFeeHandler reads updated values.
  */
-contract KyberFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, ReentrancyGuard {
+contract NimbleFeeHandler is INimbleFeeHandler, Utils5, DaoOperator, ReentrancyGuard {
     using SafeMath for uint256;
 
     uint256 internal constant DEFAULT_REWARD_BPS = 3000;
@@ -66,8 +66,8 @@ contract KyberFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, ReentrancyGua
         uint256 burnWei;
     }
 
-    IKyberDao public kyberDao;
-    IKyberProxy public kyberProxy;
+    INimbleDao public kyberDao;
+    INimbleProxy public kyberProxy;
     address public kyberNetwork;
     IERC20 public immutable knc;
 
@@ -112,22 +112,22 @@ contract KyberFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, ReentrancyGua
     );
 
     event EthReceived(uint256 amount);
-    event KyberDaoAddressSet(IKyberDao kyberDao);
+    event NimbleDaoAddressSet(INimbleDao kyberDao);
     event BurnConfigSet(ISanityRate sanityRate, uint256 weiToBurn);
     event RewardsRemovedToBurn(uint256 indexed epoch, uint256 rewardsWei);
-    event KyberNetworkUpdated(address kyberNetwork);
-    event KyberProxyUpdated(IKyberProxy kyberProxy);
+    event NimbleNetworkUpdated(address kyberNetwork);
+    event NimbleProxyUpdated(INimbleProxy kyberProxy);
 
     constructor(
         address _daoSetter,
-        IKyberProxy _kyberProxy,
+        INimbleProxy _kyberProxy,
         address _kyberNetwork,
         IERC20 _knc,
         uint256 _burnBlockInterval,
         address _daoOperator
     ) public DaoOperator(_daoOperator) {
         require(_daoSetter != address(0), "daoSetter 0");
-        require(_kyberProxy != IKyberProxy(0), "kyberNetworkProxy 0");
+        require(_kyberProxy != INimbleProxy(0), "kyberNetworkProxy 0");
         require(_kyberNetwork != address(0), "kyberNetwork 0");
         require(_knc != IERC20(0), "knc 0");
         require(_burnBlockInterval != 0, "_burnBlockInterval 0");
@@ -142,12 +142,12 @@ contract KyberFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, ReentrancyGua
         updateBRRData(DEFAULT_REWARD_BPS, DEFAULT_REBATE_BPS, now, 0);
     }
 
-    modifier onlyKyberDao {
+    modifier onlyNimbleDao {
         require(msg.sender == address(kyberDao), "only kyberDao");
         _;
     }
 
-    modifier onlyKyberNetwork {
+    modifier onlyNimbleNetwork {
         require(msg.sender == address(kyberNetwork), "only kyberNetwork");
         _;
     }
@@ -175,7 +175,7 @@ contract KyberFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, ReentrancyGua
         address platformWallet,
         uint256 platformFee,
         uint256 networkFee
-    ) external payable override onlyKyberNetwork nonReentrant {
+    ) external payable override onlyNimbleNetwork nonReentrant {
         require(token == ETH_TOKEN_ADDRESS, "token not eth");
         require(msg.value == platformFee.add(networkFee), "msg.value not equal to total fees");
 
@@ -332,11 +332,11 @@ contract KyberFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, ReentrancyGua
 
     /// @dev set kyberDao contract address once and set setter address to zero.
     /// @param _kyberDao kyberDao address.
-    function setDaoContract(IKyberDao _kyberDao) external {
+    function setDaoContract(INimbleDao _kyberDao) external {
         require(msg.sender == daoSetter, "only daoSetter");
-        require(_kyberDao != IKyberDao(0));
+        require(_kyberDao != INimbleDao(0));
         kyberDao = _kyberDao;
-        emit KyberDaoAddressSet(kyberDao);
+        emit NimbleDaoAddressSet(kyberDao);
 
         daoSetter = address(0);
     }
@@ -347,17 +347,17 @@ contract KyberFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, ReentrancyGua
         require(_kyberNetwork != address(0), "kyberNetwork 0");
         if (_kyberNetwork != kyberNetwork) {
             kyberNetwork = _kyberNetwork;
-            emit KyberNetworkUpdated(kyberNetwork);
+            emit NimbleNetworkUpdated(kyberNetwork);
         }
     }
 
     /// @dev Allow to set kyberNetworkProxy address by daoOperator
     /// @param _newProxy new kyberNetworkProxy contract
-    function setKyberProxy(IKyberProxy _newProxy) external onlyDaoOperator {
-        require(_newProxy != IKyberProxy(0), "kyberNetworkProxy 0");
+    function setNimbleProxy(INimbleProxy _newProxy) external onlyDaoOperator {
+        require(_newProxy != INimbleProxy(0), "kyberNetworkProxy 0");
         if (_newProxy != kyberProxy) {
             kyberProxy = _newProxy;
-            emit KyberProxyUpdated(_newProxy);
+            emit NimbleProxyUpdated(_newProxy);
         }
     }
 
@@ -431,7 +431,7 @@ contract KyberFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, ReentrancyGua
     ///         calls kyberDao contract to check if there were any votes for this epoch.
     /// @param epoch epoch number to check.
     function makeEpochRewardBurnable(uint256 epoch) external {
-        require(kyberDao != IKyberDao(0), "kyberDao not set");
+        require(kyberDao != INimbleDao(0), "kyberDao not set");
 
         require(kyberDao.shouldBurnRewardForEpoch(epoch), "should not burn reward");
 
@@ -475,7 +475,7 @@ contract KyberFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, ReentrancyGua
         (rewardBps, rebateBps, expiryTimestamp, epoch) = readBRRData();
 
         // Check current timestamp
-        if (now > expiryTimestamp && kyberDao != IKyberDao(0)) {
+        if (now > expiryTimestamp && kyberDao != INimbleDao(0)) {
             uint256 burnBps;
 
             (burnBps, rewardBps, rebateBps, epoch, expiryTimestamp) = kyberDao

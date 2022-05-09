@@ -1,29 +1,29 @@
 pragma solidity 0.6.6;
 
-import "../KyberNetwork.sol";
+import "../NimbleNetwork.sol";
 
 
-// override some of original KyberNetwork contract
-contract MockNetwork is KyberNetwork {
-    constructor(address _admin, IKyberStorage _kyberStorage)
+// override some of original NimbleNetwork contract
+contract MockNetwork is NimbleNetwork {
+    constructor(address _admin, INimbleStorage _kyberStorage)
         public
-        KyberNetwork(_admin, _kyberStorage)
+        NimbleNetwork(_admin, _kyberStorage)
     {}
 
     // allow set zero contract
     function setContracts(
-        IKyberFeeHandler _kyberFeeHandler,
-        IKyberMatchingEngine _kyberMatchingEngine,
+        INimbleFeeHandler _kyberFeeHandler,
+        INimbleMatchingEngine _kyberMatchingEngine,
         IGasHelper _gasHelper
     ) external override {
         if (kyberFeeHandler != _kyberFeeHandler) {
             kyberFeeHandler = _kyberFeeHandler;
-            emit KyberFeeHandlerUpdated(_kyberFeeHandler);
+            emit NimbleFeeHandlerUpdated(_kyberFeeHandler);
         }
 
         if (kyberMatchingEngine != _kyberMatchingEngine) {
             kyberMatchingEngine = _kyberMatchingEngine;
-            emit KyberMatchingEngineUpdated(_kyberMatchingEngine);
+            emit NimbleMatchingEngineUpdated(_kyberMatchingEngine);
         }
 
         if ((_gasHelper != IGasHelper(0)) && (_gasHelper != gasHelper)) {

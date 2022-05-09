@@ -1,12 +1,12 @@
 const TestToken = artifacts.require("Token.sol");
-const MockDao = artifacts.require("MockKyberDaoMoreGetters.sol");
-const StakingContract = artifacts.require("KyberStaking.sol");
-const KyberNetwork = artifacts.require("KyberNetwork.sol");
-const KyberNetworkProxy = artifacts.require("KyberNetworkProxy.sol");
-const FeeHandler = artifacts.require("KyberFeeHandler.sol");
-const KyberStorage = artifacts.require("KyberStorage.sol");
-const MatchingEngine = artifacts.require("KyberMatchingEngine.sol");
-const RateHelper = artifacts.require("KyberRateHelper.sol");
+const MockDao = artifacts.require("MockNimbleDaoMoreGetters.sol");
+const StakingContract = artifacts.require("NimbleStaking.sol");
+const NimbleNetwork = artifacts.require("NimbleNetwork.sol");
+const NimbleNetworkProxy = artifacts.require("NimbleNetworkProxy.sol");
+const FeeHandler = artifacts.require("NimbleFeeHandler.sol");
+const NimbleStorage = artifacts.require("NimbleStorage.sol");
+const MatchingEngine = artifacts.require("NimbleMatchingEngine.sol");
+const RateHelper = artifacts.require("NimbleRateHelper.sol");
 const Helper = require("../helper.js");
 const nwHelper = require("./networkHelper.js");
 
@@ -28,7 +28,7 @@ let matchingEngine;
 let operator;
 let taker;
 
-//KyberDao related data
+//NimbleDao related data
 let daoOperator;
 let kyberDao;
 let victor;
@@ -74,7 +74,7 @@ let testSuite;
 // In this test we will need to define testSuite
 // It will init contracts with different init functions
 // After each init, will run all tests to see integration is working.
-contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao integrations', function(accounts) {
+contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + NimbleDao integrations', function(accounts) {
     before("init accounts", async() => {
         operator = accounts[1];
         alerter = accounts[2];
@@ -92,35 +92,35 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
 
         networkStorage = await nwHelper.setupStorage(admin);
         //deploy network
-        network = await KyberNetwork.new(admin, networkStorage.address);
+        network = await NimbleNetwork.new(admin, networkStorage.address);
         await networkStorage.addOperator(operator, {from: admin});
         await networkStorage.setNetworkContract(network.address, {from: admin});
         await networkStorage.setFeeAccountedPerReserveType(true, true, true, false, true, true, {from: admin});
         await networkStorage.setEntitledRebatePerReserveType(true, false, true, false, true, true, {from: admin});
 
         // init proxy
-        networkProxy = await KyberNetworkProxy.new(admin);
+        networkProxy = await NimbleNetworkProxy.new(admin);
 
         // FeeHandler init
         feeHandler = await FeeHandler.new(daoSetter, networkProxy.address, network.address, KNC.address, burnBlockInterval, daoSetter);
-        // Staking & KyberDao init
+        // Staking & NimbleDao init
         await updateCurrentBlockAndTimestamp();
         await deployContracts(40, currentBlock + 350, 10);
         await setupSimpleStakingData();
 
-        // set KyberDao for feeHandler
+        // set NimbleDao for feeHandler
         await feeHandler.setDaoContract(kyberDao.address, {from: daoSetter});
 
         //init matchingEngine
         matchingEngine = await MatchingEngine.new(admin);
         await matchingEngine.setNetworkContract(network.address, {from: admin});
-        await matchingEngine.setKyberStorage(networkStorage.address, {from: admin});
+        await matchingEngine.setNimbleStorage(networkStorage.address, {from: admin});
 
         rateHelper = await RateHelper.new(admin);
         await rateHelper.setContracts(kyberDao.address, networkStorage.address, {from: admin});
 
         // setup proxy
-        await networkProxy.setKyberNetwork(network.address, {from: admin});
+        await networkProxy.setNimbleNetwork(network.address, {from: admin});
         await networkProxy.setHintHandler(matchingEngine.address, {from: admin});
 
         //init tokens
@@ -142,10 +142,10 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
 
         //setup network
         ///////////////
-        await network.addKyberProxy(networkProxy.address, {from: admin});
+        await network.addNimbleProxy(networkProxy.address, {from: admin});
         await network.addOperator(operator, {from: admin});
         await network.setContracts(feeHandler.address, matchingEngine.address, zeroAddress, {from: admin});
-        await network.setKyberDaoContract(kyberDao.address, {from: admin});
+        await network.setNimbleDaoContract(kyberDao.address, {from: admin});
 
         //add and list pair for reserve
         await nwHelper.addReservesToStorage(networkStorage, reserveInstances, tokens, operator);
@@ -216,19 +216,19 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
 
     const testIntegrationSetup = async function(){};
 
-    const testRedeployKyberProxySetup = async function(){
+    const testRedeployNimbleProxySetup = async function(){
         //remove old proxy
-        await network.removeKyberProxy(networkProxy.address, {from: admin});
+        await network.removeNimbleProxy(networkProxy.address, {from: admin});
 
         //deploy new proxy
-        networkProxy = await KyberNetworkProxy.new(admin);
-        await networkProxy.setKyberNetwork(network.address, {from: admin});
+        networkProxy = await NimbleNetworkProxy.new(admin);
+        await networkProxy.setNimbleNetwork(network.address, {from: admin});
         await networkProxy.setHintHandler(matchingEngine.address, {from: admin});
-        await network.addKyberProxy(networkProxy.address, {from: admin});
+        await network.addNimbleProxy(networkProxy.address, {from: admin});
         // FeeHandler init
         feeHandler = await FeeHandler.new(daoSetter, networkProxy.address, network.address, KNC.address, burnBlockInterval, daoSetter);
 
-        // Staking & KyberDao init
+        // Staking & NimbleDao init
         await updateCurrentBlockAndTimestamp();
         await deployContracts(40, currentBlock + 350, 10);
         await setupSimpleStakingData();
@@ -238,7 +238,7 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
 
         // setup network
         await network.setContracts(feeHandler.address, matchingEngine.address, zeroAddress, {from: admin})
-        await network.setKyberDaoContract(kyberDao.address, {from: admin});
+        await network.setNimbleDaoContract(kyberDao.address, {from: admin});
 
         // setup rateHelper
         await rateHelper.setContracts(kyberDao.address, networkStorage.address, {from: admin});
@@ -248,11 +248,11 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
         await Helper.setNextBlockTimestamp(networkData.expiryTimestamp * 1 + 1);
     };
 
-    const testRedeployKyberDao = async function(){
+    const testRedeployNimbleDao = async function(){
         // FeeHandler init
         feeHandler = await FeeHandler.new(daoSetter, networkProxy.address, network.address, KNC.address, burnBlockInterval, daoSetter);
 
-        // Staking & KyberDao init
+        // Staking & NimbleDao init
         await updateCurrentBlockAndTimestamp();
         await deployContracts(40, currentBlock + 350, 10);
         await setupSimpleStakingData();
@@ -261,7 +261,7 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
         await feeHandler.setDaoContract(kyberDao.address, {from: daoSetter});
 
         // setup network
-        await network.setKyberDaoContract(kyberDao.address, {from: admin});
+        await network.setNimbleDaoContract(kyberDao.address, {from: admin});
 
         // setup rateHelper
         await network.setContracts(feeHandler.address, matchingEngine.address, zeroAddress, {from: admin})
@@ -272,21 +272,21 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
         await Helper.setNextBlockTimestamp(networkData.expiryTimestamp * 1 + 1);
     };
 
-    const testRedeployKyberNetwork = async function(){
+    const testRedeployNimbleNetwork = async function(){
         //deploy network
-        network = await KyberNetwork.new(admin, networkStorage.address);
+        network = await NimbleNetwork.new(admin, networkStorage.address);
 
         await networkStorage.setNetworkContract(network.address, {from: admin});
         await matchingEngine.setNetworkContract(network.address, {from: admin});
-        await networkProxy.setKyberNetwork(network.address, {from: admin});
+        await networkProxy.setNimbleNetwork(network.address, {from: admin});
         await feeHandler.setNetworkContract(network.address, {from: daoSetter});
 
         //setup network
         ///////////////
-        await network.addKyberProxy(networkProxy.address, {from: admin});
+        await network.addNimbleProxy(networkProxy.address, {from: admin});
         await network.addOperator(operator, {from: admin});
         await network.setContracts(feeHandler.address, matchingEngine.address, zeroAddress, {from: admin});
-        await network.setKyberDaoContract(kyberDao.address, {from: admin});
+        await network.setNimbleDaoContract(kyberDao.address, {from: admin});
 
         //add and list pair for network
         await nwHelper.setNetworkForReserve(reserveInstances, network.address, admin);
@@ -299,29 +299,29 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
         await updateCurrentBlockAndTimestamp();
     };
 
-    const testRedeployKyberStorage = async function(){
+    const testRedeployNimbleStorage = async function(){
         networkStorage = await nwHelper.setupStorage(admin);
         //deploy network
-        network = await KyberNetwork.new(admin, networkStorage.address);
+        network = await NimbleNetwork.new(admin, networkStorage.address);
         await networkStorage.addOperator(operator, {from: admin});
         await networkStorage.setNetworkContract(network.address, {from: admin});
         await networkStorage.setFeeAccountedPerReserveType(true, true, true, false, true, true, {from: admin});
         await networkStorage.setEntitledRebatePerReserveType(true, false, true, false, true, true, {from: admin});
 
         await matchingEngine.setNetworkContract(network.address, {from: admin});
-        await matchingEngine.setKyberStorage(networkStorage.address, {from: admin});
+        await matchingEngine.setNimbleStorage(networkStorage.address, {from: admin});
 
         await rateHelper.setContracts(kyberDao.address, networkStorage.address, {from: admin});
 
         // setup proxy
-        await networkProxy.setKyberNetwork(network.address, {from: admin});
+        await networkProxy.setNimbleNetwork(network.address, {from: admin});
 
         //setup network
         ///////////////
-        await network.addKyberProxy(networkProxy.address, {from: admin});
+        await network.addNimbleProxy(networkProxy.address, {from: admin});
         await network.addOperator(operator, {from: admin});
         await network.setContracts(feeHandler.address, matchingEngine.address, zeroAddress, {from: admin});
-        await network.setKyberDaoContract(kyberDao.address, {from: admin});
+        await network.setNimbleDaoContract(kyberDao.address, {from: admin});
 
         //add and list pair for reserve
         await nwHelper.setNetworkForReserve(reserveInstances, network.address, admin);
@@ -340,7 +340,7 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
     const testRedeployMatchingEngine = async function(){
         matchingEngine = await MatchingEngine.new(admin);
         await matchingEngine.setNetworkContract(network.address, {from: admin});
-        await matchingEngine.setKyberStorage(networkStorage.address, {from: admin});
+        await matchingEngine.setNimbleStorage(networkStorage.address, {from: admin});
 
         await rateHelper.setContracts(kyberDao.address, networkStorage.address, {from: admin});
 
@@ -353,10 +353,10 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
 
     testSuite = {
         "test integration" : testIntegrationSetup,
-        "upgrage ability - redeploy KyberProxy": testRedeployKyberProxySetup,
-        "upgrade ability - redeploy KyberDao/kyberStaking/feeHandler": testRedeployKyberDao,
-        "upgrade ability - redeploy KyberStorage": testRedeployKyberStorage,
-        "upgrade ability - redeploy KyberNetwork": testRedeployKyberNetwork,
+        "upgrage ability - redeploy NimbleProxy": testRedeployNimbleProxySetup,
+        "upgrade ability - redeploy NimbleDao/kyberStaking/feeHandler": testRedeployNimbleDao,
+        "upgrade ability - redeploy NimbleStorage": testRedeployNimbleStorage,
+        "upgrade ability - redeploy NimbleNetwork": testRedeployNimbleNetwork,
         "upgrade ability - redeploy matchingEngine": testRedeployMatchingEngine,
     }
     // run all test with each setup
@@ -406,7 +406,7 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
                 Helper.assertEqual(brrData.expiryTimestamp, daoStartTime - 1);
                 Helper.assertEqual(brrData.epoch, 0);
 
-                // no campaign yet, so still default data from KyberDao
+                // no campaign yet, so still default data from NimbleDao
 
                 let daoBrrData = await kyberDao.getLatestBRRData();
                 let daoNetworkFee = (await kyberDao.getLatestNetworkFeeData()).feeInBps;
@@ -773,7 +773,7 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
                 );
             });
 
-            it("test update network fee from KyberDao with fee 0, network updates network fee, feeHandler doesn't update brr data", async() => {
+            it("test update network fee from NimbleDao with fee 0, network updates network fee, feeHandler doesn't update brr data", async() => {
                 let curNetworkFee = (await kyberDao.getLatestNetworkFeeData()).feeInBps;
                 let curBrrData = await feeHandler.readBRRData();
 
@@ -801,7 +801,7 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
                 // make a simple swap, make sure data is updated for epoch 4 with concluding campaign
                 await networkProxy.swapEtherToToken(destToken.address, 1, {from: taker, value: ethSrcQty});
 
-                // ============ check data should be updated from KyberDao ============
+                // ============ check data should be updated from NimbleDao ============
                 // check expected network data from network and dao
                 networkData = await network.getNetworkData();
                 Helper.assertEqual(blocksToSeconds(11 * epochPeriod) + daoStartTime - 1, networkData.expiryTimestamp);
@@ -822,7 +822,7 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
                 Helper.assertEqual(brrData.rebateBps, daoBrrData.rebateInBps);
             });
 
-            it("test update network fee from KyberDao with fee 49.99% - max fee", async() => {
+            it("test update network fee from NimbleDao with fee 49.99% - max fee", async() => {
                 let curNetworkFee = (await kyberDao.getLatestNetworkFeeData()).feeInBps;
                 let curBrrData = await feeHandler.readBRRData();
 
@@ -978,7 +978,7 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
                 );
             });
 
-            it("test can not record new data for KyberDao as no trade for more than 1 epoch", async() => {
+            it("test can not record new data for NimbleDao as no trade for more than 1 epoch", async() => {
                 let curNetworkFee = (await kyberDao.getLatestNetworkFeeData()).feeInBps;
                 let curBrrData = await feeHandler.readBRRData();
 
@@ -1023,7 +1023,7 @@ contract('Proxy + Network + MatchingEngine + FeeHandler + Staking + KyberDao int
                 Helper.assertEqual(18, await kyberDao.getCurrentEpochNumber());
 
                 // make a first trade and check data changes as expected
-                // no trade at epoch 17, so can not update new data for KyberDao from previous network fee + brr camps
+                // no trade at epoch 17, so can not update new data for NimbleDao from previous network fee + brr camps
                 await tradeAndCheckDataChangesAsExpected(
                     18, // epoch
                     curNetworkFee, // new network fee
@@ -1067,7 +1067,7 @@ async function tradeAndCheckDataChangesAsExpected (epoch, expectedNetworkFee, ex
     let txResult1 = await networkProxy.swapEtherToToken(destToken.address, 1, {from: taker, value: ethSrcQty});
     console.log("eth - token, first trade, gas used: " + txResult1.receipt.gasUsed);
 
-    // ============ check data should be updated from KyberDao ============
+    // ============ check data should be updated from NimbleDao ============
     // check expected network data from network and dao
     networkData = await network.getNetworkData();
     Helper.assertEqual(blocksToSeconds(epoch * epochPeriod) + daoStartTime - 1, networkData.expiryTimestamp);

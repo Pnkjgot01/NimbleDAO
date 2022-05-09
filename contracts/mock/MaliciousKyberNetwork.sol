@@ -1,17 +1,17 @@
 pragma solidity 0.6.6;
 
-import "../KyberNetwork.sol";
+import "../NimbleNetwork.sol";
 
 
 /*
- * @title Malicious Kyber Network, takes (steals) some extra fees and reports actual dest amount minus Fees.
+ * @title Malicious Nimble Network, takes (steals) some extra fees and reports actual dest amount minus Fees.
  */
-contract MaliciousKyberNetwork is KyberNetwork {
+contract MaliciousNimbleNetwork is NimbleNetwork {
     uint256 public myFeeWei = 10;
 
-    constructor(address _admin, IKyberStorage _kyberStorage)
+    constructor(address _admin, INimbleStorage _kyberStorage)
         public
-        KyberNetwork(_admin, _kyberStorage)
+        NimbleNetwork(_admin, _kyberStorage)
     {}
 
     function setMyFeeWei(uint256 fee) public {
@@ -80,7 +80,7 @@ contract MaliciousKyberNetwork is KyberNetwork {
 
         handleFees(tradeData);
 
-        emit KyberTrade({
+        emit NimbleTrade({
             src: tradeData.input.src,
             dest: tradeData.input.dest,
             ethWeiValue: tradeData.tradeWei,
@@ -157,5 +157,5 @@ contract MaliciousKyberNetwork is KyberNetwork {
     }
 
     // overwrite function to reduce bytecode size
-    function removeKyberProxy(address kyberProxy) external virtual override {}
+    function removeNimbleProxy(address kyberProxy) external virtual override {}
 }

@@ -1,4 +1,4 @@
-const KyberHistory = artifacts.require("KyberHistory.sol");
+const NimbleHistory = artifacts.require("NimbleHistory.sol");
 const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 const { zeroAddress } = require("../helper.js");
 const Helper = require("../helper.js");
@@ -10,7 +10,7 @@ let storage;
 let kyberHistory;
 let dao;
 
-contract('KyberHistory', function(accounts) {
+contract('NimbleHistory', function(accounts) {
     before("one time global init", async() => {
         //init accounts
         user = accounts[0];
@@ -21,8 +21,8 @@ contract('KyberHistory', function(accounts) {
     });
 
     describe("test onlyAdmin and onlyNetwork permissions", async() => {
-        before("deploy KyberHistory instance", async() => {
-            kyberHistory = await KyberHistory.new(admin);
+        before("deploy NimbleHistory instance", async() => {
+            kyberHistory = await NimbleHistory.new(admin);
         });
 
         it("should not have unauthorized personnel set storage contract", async() => {
@@ -65,10 +65,10 @@ contract('KyberHistory', function(accounts) {
     });
 
     describe("test contract event", async() => {
-        it("KyberStorageUpdated", async() => {
-            kyberHistory = await KyberHistory.new(admin);
+        it("NimbleStorageUpdated", async() => {
+            kyberHistory = await NimbleHistory.new(admin);
             let txResult = await kyberHistory.setStorageContract(storage, {from: admin});
-            expectEvent(txResult, 'KyberStorageUpdated', {
+            expectEvent(txResult, 'NimbleStorageUpdated', {
                 newStorage: storage
             });
         });
@@ -76,7 +76,7 @@ contract('KyberHistory', function(accounts) {
 
     describe("test setting null storage address", async() => {
         before("setup kyberHistory instance", async() => {
-            kyberHistory = await KyberHistory.new(admin);
+            kyberHistory = await NimbleHistory.new(admin);
             await kyberHistory.setStorageContract(storage, {from: admin});
         });
 
@@ -90,7 +90,7 @@ contract('KyberHistory', function(accounts) {
 
     describe("test saving and getting contracts", async() => {
         beforeEach("setup kyberHistory instance", async() => {
-            kyberHistory = await KyberHistory.new(admin);
+            kyberHistory = await NimbleHistory.new(admin);
             await kyberHistory.setStorageContract(storage, {from: admin});
         });
 

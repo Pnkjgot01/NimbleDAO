@@ -1,8 +1,8 @@
 const TestToken = artifacts.require("Token.sol");
 const MockReserve = artifacts.require("MockReserve.sol");
-const KyberHistory = artifacts.require("KyberHistory.sol");
-const KyberStorage = artifacts.require("KyberStorage.sol");
-const KyberNetwork = artifacts.require("KyberNetwork.sol");
+const NimbleHistory = artifacts.require("NimbleHistory.sol");
+const NimbleStorage = artifacts.require("NimbleStorage.sol");
+const NimbleNetwork = artifacts.require("NimbleNetwork.sol");
 const MockStorage = artifacts.require("MockStorage.sol");
 const Helper = require("../helper.js");
 const nwHelper = require("./networkHelper.js");
@@ -40,7 +40,7 @@ let numReserves;
 ////////////
 let token;
 
-contract('KyberStorage', function(accounts) {
+contract('NimbleStorage', function(accounts) {
 
     before("one time global init", async() => {
         //init accounts
@@ -54,15 +54,15 @@ contract('KyberStorage', function(accounts) {
 
     describe("test init reverts with null historical address", async() => {
         before("deploy historical contracts", async() => {
-            kyberNetworkHistory = await KyberHistory.new(admin);
-            kyberFeeHandlerHistory = await KyberHistory.new(admin);
-            kyberDaoHistory = await KyberHistory.new(admin);
-            kyberMatchingEngineHistory = await KyberHistory.new(admin);
+            kyberNetworkHistory = await NimbleHistory.new(admin);
+            kyberFeeHandlerHistory = await NimbleHistory.new(admin);
+            kyberDaoHistory = await NimbleHistory.new(admin);
+            kyberMatchingEngineHistory = await NimbleHistory.new(admin);
         });
 
         it("should revert for null kyberNetworkHistory address", async() => {
             await expectRevert(
-                KyberStorage.new(
+                NimbleStorage.new(
                     admin,
                     zeroAddress,
                     kyberFeeHandlerHistory.address,
@@ -75,7 +75,7 @@ contract('KyberStorage', function(accounts) {
 
         it("should revert for null kyberFeeHandlerHistory address", async() => {
             await expectRevert(
-                KyberStorage.new(
+                NimbleStorage.new(
                     admin,
                     kyberNetworkHistory.address,
                     zeroAddress,
@@ -88,7 +88,7 @@ contract('KyberStorage', function(accounts) {
 
         it("should revert for null kyberDaoHistory address", async() => {
             await expectRevert(
-                KyberStorage.new(
+                NimbleStorage.new(
                     admin,
                     kyberNetworkHistory.address,
                     kyberFeeHandlerHistory.address,
@@ -101,7 +101,7 @@ contract('KyberStorage', function(accounts) {
 
         it("should revert for null kyberMatchingEngineHistory address", async() => {
             await expectRevert(
-                KyberStorage.new(
+                NimbleStorage.new(
                     admin,
                     kyberNetworkHistory.address,
                     kyberFeeHandlerHistory.address,
@@ -114,9 +114,9 @@ contract('KyberStorage', function(accounts) {
     });
 
     describe("test onlyAdmin and onlyOperator permissions", async() => {
-        before("deploy KyberStorage instance, 1 mock reserve and 1 mock token", async() => {
+        before("deploy NimbleStorage instance, 1 mock reserve and 1 mock token", async() => {
             kyberStorage = await nwHelper.setupStorage(admin);
-            network = await KyberNetwork.new(admin, kyberStorage.address);
+            network = await NimbleNetwork.new(admin, kyberStorage.address);
             await kyberStorage.addOperator(operator, {from: admin});
             await kyberStorage.setNetworkContract(network.address, { from: admin});
             await kyberStorage.setFeeAccountedPerReserveType(true, true, true, false, true, true, {from: admin});
@@ -221,11 +221,11 @@ contract('KyberStorage', function(accounts) {
 
         it("should not have unauthorized personnel set contracts", async() => {
             await expectRevert(
-                kyberStorage.setKyberDaoContract(kyberDaoAddr, { from: operator}), "only kyberNetwork"
+                kyberStorage.setNimbleDaoContract(kyberDaoAddr, { from: operator}), "only kyberNetwork"
             );
 
             await expectRevert(
-                kyberStorage.setKyberDaoContract(kyberDaoAddr, { from: admin}), "only kyberNetwork"
+                kyberStorage.setNimbleDaoContract(kyberDaoAddr, { from: admin}), "only kyberNetwork"
             );
 
             await expectRevert(
@@ -241,7 +241,7 @@ contract('KyberStorage', function(accounts) {
             let oldNetwork = await kyberStorage.kyberNetwork();
             network = accounts[3];
             await kyberStorage.setNetworkContract(network, { from: admin});
-            await kyberStorage.setKyberDaoContract(kyberDaoAddr, { from: network});
+            await kyberStorage.setNimbleDaoContract(kyberDaoAddr, { from: network});
             await kyberStorage.setContracts(feeHandlerAddr, matchingEngineAddr, { from: network });
             let result = await kyberStorage.getContracts();
             Helper.assertEqualArray(result.kyberDaoAddresses, [kyberDaoAddr], "unexpected dao history");
@@ -254,7 +254,7 @@ contract('KyberStorage', function(accounts) {
     describe("test contract event", async() => {
         before("deploy and setup kyberStorage instance", async() => {
             kyberStorage = await nwHelper.setupStorage(admin);
-            network = await KyberNetwork.new(admin, kyberStorage.address);
+            network = await NimbleNetwork.new(admin, kyberStorage.address);
             await kyberStorage.addOperator(operator, {from: admin});
             await kyberStorage.setFeeAccountedPerReserveType(true, true, true, false, true, true, {from: admin});
             await kyberStorage.setEntitledRebatePerReserveType(true, false, true, false, true, true, {from: admin});
@@ -262,8 +262,8 @@ contract('KyberStorage', function(accounts) {
 
         it("shoud test set network event", async() => {
             txResult = await kyberStorage.setNetworkContract(network.address, {from: admin});
-            expectEvent(txResult, "KyberNetworkUpdated", {
-                newKyberNetwork: network.address
+            expectEvent(txResult, "NimbleNetworkUpdated", {
+                newNimbleNetwork: network.address
             });
         });
 
@@ -401,7 +401,7 @@ contract('KyberStorage', function(accounts) {
         });
 
         it("set and get contracts history", async() =>{
-            await kyberStorage.setKyberDaoContract(kyberDaoAddr, { from: network});
+            await kyberStorage.setNimbleDaoContract(kyberDaoAddr, { from: network});
             await kyberStorage.setContracts(feeHandlerAddr, matchingEngineAddr, { from: network });
             
             // get and set second dao, matchingEngine, feeHandler and network contracts
@@ -410,7 +410,7 @@ contract('KyberStorage', function(accounts) {
             let matchingEngineAddr2 = accounts[9];
             let networkAddr2 = accounts[10];
 
-            await kyberStorage.setKyberDaoContract(kyberDaoAddr2, { from: network});
+            await kyberStorage.setNimbleDaoContract(kyberDaoAddr2, { from: network});
             await kyberStorage.setContracts(feeHandlerAddr2, matchingEngineAddr2, { from: network });
             await kyberStorage.setNetworkContract(networkAddr2, { from: admin});
 
@@ -425,7 +425,7 @@ contract('KyberStorage', function(accounts) {
         });
 
         it("should enable setting an empty dao contract", async function(){
-            await kyberStorage.setKyberDaoContract(zeroAddress, {from: network});
+            await kyberStorage.setNimbleDaoContract(zeroAddress, {from: network});
 
             let rxContracts = await kyberStorage.getContracts();
 
@@ -446,40 +446,40 @@ contract('KyberStorage', function(accounts) {
         });
 
         it("test can add max two proxies", async() => {
-            await kyberStorage.addKyberProxy(proxy1, maxProxies, {from: network});
-            await kyberStorage.addKyberProxy(proxy2, maxProxies, {from: network});
+            await kyberStorage.addNimbleProxy(proxy1, maxProxies, {from: network});
+            await kyberStorage.addNimbleProxy(proxy2, maxProxies, {from: network});
 
-            assert(await kyberStorage.isKyberProxyAdded(), "proxy is not added");
+            assert(await kyberStorage.isNimbleProxyAdded(), "proxy is not added");
 
             await expectRevert(
-                kyberStorage.addKyberProxy(proxy3, maxProxies, {from: network}),
+                kyberStorage.addNimbleProxy(proxy3, maxProxies, {from: network}),
                 "max kyberProxies limit reached"
             );
 
-            proxies = await kyberStorage.getKyberProxies();
+            proxies = await kyberStorage.getNimbleProxies();
             Helper.assertEqualArray(proxies, [proxy1, proxy2], "unexpected proxies");
         });
 
         it("test remove proxy revert if not added", async() => {
-            await kyberStorage.addKyberProxy(proxy2, maxProxies, {from: network});
+            await kyberStorage.addNimbleProxy(proxy2, maxProxies, {from: network});
             await expectRevert(
-                kyberStorage.removeKyberProxy(proxy1, {from: network}),
+                kyberStorage.removeNimbleProxy(proxy1, {from: network}),
                 "kyberProxy not found"
             );
-            await kyberStorage.addKyberProxy(proxy1, maxProxies, {from: network});
-            await kyberStorage.removeKyberProxy(proxy1, {from: network});
+            await kyberStorage.addNimbleProxy(proxy1, maxProxies, {from: network});
+            await kyberStorage.removeNimbleProxy(proxy1, {from: network});
         });
 
         it("test only admin can add proxies", async() => {
             await expectRevert(
-                kyberStorage.addKyberProxy(proxy1, new BN(100), {from: accounts[0]}),
+                kyberStorage.addNimbleProxy(proxy1, new BN(100), {from: accounts[0]}),
                 "only kyberNetwork"
             );
         });
 
         it("test can't add proxy zero address", async() => {
             await expectRevert(
-                kyberStorage.addKyberProxy(zeroAddress, maxProxies, {from: network}),
+                kyberStorage.addNimbleProxy(zeroAddress, maxProxies, {from: network}),
                 "kyberProxy 0"
             );
         });
@@ -488,7 +488,7 @@ contract('KyberStorage', function(accounts) {
     describe("test adding reserves", async() => {
         before("deploy and setup kyberStorage instance & 1 mock reserve", async() => {
             kyberStorage = await nwHelper.setupStorage(admin);
-            network = await KyberNetwork.new(admin, kyberStorage.address);
+            network = await NimbleNetwork.new(admin, kyberStorage.address);
             await kyberStorage.addOperator(operator, {from: admin});
             await kyberStorage.setNetworkContract(network.address, {from: admin});
             await kyberStorage.setFeeAccountedPerReserveType(true, true, true, false, true, true, {from: admin});
@@ -723,7 +723,7 @@ contract('KyberStorage', function(accounts) {
         it("test get reserve method", async() => {
             // setup storage and reserve
             let kyberStorage = await nwHelper.setupStorage(admin);
-            let network = await KyberNetwork.new(admin, kyberStorage.address);
+            let network = await NimbleNetwork.new(admin, kyberStorage.address);
             await kyberStorage.addOperator(operator, {from: admin});
             await kyberStorage.setNetworkContract(network.address, {from: admin});
             await kyberStorage.setFeeAccountedPerReserveType(true, true, true, true, false, true, {from: admin});
@@ -782,7 +782,7 @@ contract('KyberStorage', function(accounts) {
     describe("test listing token pair and removing reserve", async() => {
         before("deploy and setup kyberStorage instance & add 2 mock reserves, & 1 mock token", async() => {
             kyberStorage = await nwHelper.setupStorage(admin);
-            network = await KyberNetwork.new(admin, kyberStorage.address);
+            network = await NimbleNetwork.new(admin, kyberStorage.address);
             await kyberStorage.addOperator(operator, {from: admin});
             await kyberStorage.setNetworkContract(network.address, {from: admin});
             await kyberStorage.setFeeAccountedPerReserveType(true, true, true, false, true, true, {from: admin});
@@ -833,10 +833,10 @@ contract('KyberStorage', function(accounts) {
         });
 
         it("should revert if reserveId is 0 when removing reserve", async() => {
-            kyberNetworkHistory = await KyberHistory.new(admin);
-            kyberFeeHandlerHistory = await KyberHistory.new(admin);
-            kyberDaoHistory = await KyberHistory.new(admin);
-            kyberMatchingEngineHistory = await KyberHistory.new(admin);
+            kyberNetworkHistory = await NimbleHistory.new(admin);
+            kyberFeeHandlerHistory = await NimbleHistory.new(admin);
+            kyberDaoHistory = await NimbleHistory.new(admin);
+            kyberMatchingEngineHistory = await NimbleHistory.new(admin);
             let mockStorage = await MockStorage.new(
                 admin,
                 kyberNetworkHistory.address,
@@ -848,7 +848,7 @@ contract('KyberStorage', function(accounts) {
             await kyberFeeHandlerHistory.setStorageContract(mockStorage.address, {from: admin});
             await kyberDaoHistory.setStorageContract(mockStorage.address, {from: admin});
             await kyberMatchingEngineHistory.setStorageContract(mockStorage.address, {from: admin});
-            let mockNetwork = await KyberNetwork.new(admin, mockStorage.address);
+            let mockNetwork = await NimbleNetwork.new(admin, mockStorage.address);
             await mockStorage.addOperator(operator, {from: admin});
             await mockStorage.setNetworkContract(mockNetwork.address, {from: admin});
             await mockStorage.setFeeAccountedPerReserveType(true, true, true, false, true, true, {from: admin});
@@ -1167,7 +1167,7 @@ contract('KyberStorage', function(accounts) {
     describe("test onlyAdmin and onlyOperator permissions", async() => {
         before("deploy storage instance, 1 mock reserve and 1 mock token", async() => {
             storage = await nwHelper.setupStorage(admin);
-            network = await KyberNetwork.new(admin, storage.address);
+            network = await NimbleNetwork.new(admin, storage.address);
             await storage.addOperator(operator, {from: admin});
             await storage.setNetworkContract(network.address, {from:admin});
             token = await TestToken.new("test", "tst", 18);
@@ -1252,7 +1252,7 @@ contract('KyberStorage', function(accounts) {
         let tempNetwork;
         before("deploy and setup matchingEngine instance & 1 mock reserve", async() => {
             tempStorage = await nwHelper.setupStorage(admin);
-            tempNetwork = await KyberNetwork.new(admin, tempStorage.address);
+            tempNetwork = await NimbleNetwork.new(admin, tempStorage.address);
             await tempStorage.addOperator(operator, {from: admin});
             await tempStorage.setNetworkContract(tempNetwork.address, {from: admin});
 
@@ -1327,7 +1327,7 @@ contract('KyberStorage', function(accounts) {
 
         before("setup matchingEngine instance reserve per each reserve type", async() => {
             storage = await nwHelper.setupStorage(admin);
-            network = await KyberNetwork.new(admin, storage.address);
+            network = await NimbleNetwork.new(admin, storage.address);
             await storage.addOperator(operator, {from: admin});
             await storage.setNetworkContract(network.address, {from: admin});
             await storage.setFeeAccountedPerReserveType(true, true, true, false, true, true, {from: admin});
@@ -1405,7 +1405,7 @@ contract('KyberStorage', function(accounts) {
 
         before("setup matchingEngine instance", async() => {
             storage = await nwHelper.setupStorage(admin);
-            network = await KyberNetwork.new(admin, storage.address);
+            network = await NimbleNetwork.new(admin, storage.address);
             await storage.setNetworkContract(network.address, {from: admin});
             await storage.addOperator(operator, {from: admin});
         });
