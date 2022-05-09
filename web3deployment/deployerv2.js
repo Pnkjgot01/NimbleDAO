@@ -112,15 +112,15 @@ const input = {
   "VolumeImbalanceRecorder.sol" : fs.readFileSync(contractPath + 'VolumeImbalanceRecorder.sol', 'utf8'),
   "FeeBurner.sol" : fs.readFileSync(contractPath + 'FeeBurner.sol', 'utf8'),
   "WhiteListInterface.sol" : fs.readFileSync(contractPath + 'WhiteListInterface.sol', 'utf8'),
-  "KyberNetwork.sol" : fs.readFileSync(contractPath + 'KyberNetwork.sol', 'utf8'),
-  "KyberNetworkInterface.sol" : fs.readFileSync(contractPath + 'KyberNetworkInterface.sol', 'utf8'),
-  "KyberNetworkProxyInterface.sol" : fs.readFileSync(contractPath + 'KyberNetworkProxyInterface.sol', 'utf8'),
-  "KyberNetworkProxy.sol" : fs.readFileSync(contractPath + 'KyberNetworkProxy.sol', 'utf8'),
+  "NimbleNetwork.sol" : fs.readFileSync(contractPath + 'NimbleNetwork.sol', 'utf8'),
+  "NimbleNetworkInterface.sol" : fs.readFileSync(contractPath + 'NimbleNetworkInterface.sol', 'utf8'),
+  "NimbleNetworkProxyInterface.sol" : fs.readFileSync(contractPath + 'NimbleNetworkProxyInterface.sol', 'utf8'),
+  "NimbleNetworkProxy.sol" : fs.readFileSync(contractPath + 'NimbleNetworkProxy.sol', 'utf8'),
   "SimpleNetworkInterface.sol" : fs.readFileSync(contractPath + 'SimpleNetworkInterface.sol', 'utf8'),
   "WhiteList.sol" : fs.readFileSync(contractPath + 'WhiteList.sol', 'utf8'),
-  "KyberReserveInterface.sol" : fs.readFileSync(contractPath + 'KyberReserveInterface.sol', 'utf8'),
+  "NimbleReserveInterface.sol" : fs.readFileSync(contractPath + 'NimbleReserveInterface.sol', 'utf8'),
   "Withdrawable.sol" : fs.readFileSync(contractPath + 'Withdrawable.sol', 'utf8'),
-  "KyberReserve.sol" : fs.readFileSync(contractPath + 'KyberReserve.sol', 'utf8'),
+  "NimbleReserve.sol" : fs.readFileSync(contractPath + 'NimbleReserve.sol', 'utf8'),
   "Wrapper.sol" : fs.readFileSync(contractPath + 'mockContracts/Wrapper.sol', 'utf8')
 };
 
@@ -155,7 +155,7 @@ class Reserve {
     this.name = name;
     this.address = jsonInput["address"];
     this.fees = jsonInput["fees"];
-    this.wallet = jsonInput["KNC wallet"];
+    this.wallet = jsonInput["NMB wallet"];
     this.tokens = jsonInput["tokens"];
   }
 }
@@ -188,15 +188,15 @@ function parseInput( jsonInput ) {
       walletDataArray.push(new Wallet(walletData[wallet],wallet));
     });
 
-    networkPermissions = jsonInput.permission["KyberNetwork"];
+    networkPermissions = jsonInput.permission["NimbleNetwork"];
     feeBurnerPermissions = jsonInput.permission["FeeBurner"];
     expectedRatePermissions = jsonInput.permission["ExpectedRate"];
 
     maxGasPrice =  web3.utils.toBN(jsonInput["max gas price"]);
     negDiffInBps = web3.utils.toBN(jsonInput["neg diff in bps"]);
     minExpectedRateSlippage = web3.utils.toBN(jsonInput["min expected rate slippage"]);
-    kncWallet = jsonInput["KNC wallet"];
-    kncToEthRate = web3.utils.toBN(jsonInput["KNC to ETH rate"]);
+    kncWallet = jsonInput["NMB wallet"];
+    kncToEthRate = web3.utils.toBN(jsonInput["NMB to ETH rate"]);
     taxFeesBps = jsonInput["tax fees bps"];
     taxWalletAddress = jsonInput["tax wallet address"];
     whitelistAddress = jsonInput["whitelist"];
@@ -241,10 +241,10 @@ async function main() {
     await waitForEth();
   }
 
-  console.log("deploying kyber network proxy");
-  [proxyAddress,proxyContract] = await deployContract(output, "KyberNetworkProxy.sol:KyberNetworkProxy", [sender]);
-  console.log("deploying kyber network");
-  [networkAddress,networkContract] = await deployContract(output, "KyberNetwork.sol:KyberNetwork", [sender]);
+  console.log("deploying nimble network proxy");
+  [proxyAddress,proxyContract] = await deployContract(output, "NimbleNetworkProxy.sol:NimbleNetworkProxy", [sender]);
+  console.log("deploying nimble network");
+  [networkAddress,networkContract] = await deployContract(output, "NimbleNetwork.sol:NimbleNetwork", [sender]);
   console.log("deploying fee burner");
   [feeBurnerAddress, feeBurnerContract] = await deployContract(output, "FeeBurner.sol:FeeBurner", [sender,"0xdd974D5C2e2928deA5F71b9825b8b646686BD200",networkAddress]);
   console.log("deploying expected rates");
@@ -257,7 +257,7 @@ async function main() {
 
   // set network in proxy
   console.log("set network in proxy");
-  await sendTx(proxyContract.methods.setKyberNetworkContract(networkAddress));
+  await sendTx(proxyContract.methods.setNimbleNetworkContract(networkAddress));
 
   // set permissions
   console.log("set proxy permissions");
@@ -265,7 +265,7 @@ async function main() {
 
   // set proxy of network
   console.log("set proxy of network");
-  await sendTx(networkContract.methods.setKyberProxy(proxyAddress));
+  await sendTx(networkContract.methods.setNimbleProxy(proxyAddress));
 
   // set whitelist
   console.log("set whitelist address");
@@ -308,8 +308,8 @@ async function main() {
   await setPermissions(networkContract, networkPermissions);
 
   // burn fee
-  console.log("set KNC to ETH rate");
-  await sendTx(feeBurnerContract.methods.setKNCRate(kncToEthRate));
+  console.log("set NMB to ETH rate");
+  await sendTx(feeBurnerContract.methods.setNMBRate(kncToEthRate));
   console.log("set tax fees bps");
   await sendTx(feeBurnerContract.methods.setTaxInBps(taxFeesBps));
   if(taxWalletAddress != '' && taxWalletAddress != 0) {
@@ -358,8 +358,8 @@ function printParams(jsonInput) {
     dictOutput["max gas price"] = jsonInput["max gas price"];
     dictOutput["neg diff in bps"] = jsonInput["neg diff in bps"];
     dictOutput["min expected rate slippage"] = jsonInput["min expected rate slippage"];
-    dictOutput["KNC wallet"] = kncWallet;
-    dictOutput["KNC to ETH rate"] = jsonInput["KNC to ETH rate"];
+    dictOutput["NMB wallet"] = kncWallet;
+    dictOutput["NMB to ETH rate"] = jsonInput["NMB to ETH rate"];
     dictOutput["tax wallet address"] = jsonInput["tax wallet address"];
     dictOutput["tax fees bps"] = jsonInput["tax fees bps"];
     dictOutput["valid duration block"] = jsonInput["valid duration block"];

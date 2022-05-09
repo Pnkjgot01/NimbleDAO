@@ -1,6 +1,6 @@
 const TestToken = artifacts.require("TestToken.sol");
-const NetworkProxy = artifacts.require("KyberNetworkProxy.sol");
-const KyberNetwork = artifacts.require("KyberNetwork.sol");
+const NetworkProxy = artifacts.require("NimbleNetworkProxy.sol");
+const NimbleNetwork = artifacts.require("NimbleNetwork.sol");
 const FeeBurner = artifacts.require("FeeBurner.sol");
 const ExpectedRate = artifacts.require("ExpectedRate.sol");
 const OrderList = artifacts.require("OrderList.sol");
@@ -10,7 +10,7 @@ const MockOrderbookReserve = artifacts.require("MockOrderbookReserve.sol");
 const TestTokenFailing = artifacts.require("TestTokenFailing.sol");
 const TestTokenTransferFailing = artifacts.require("TestTokenTransferFailing.sol");
 const MockMedianizer = artifacts.require("MockMedianizer.sol");
-const MockKyberNetwork = artifacts.require("MockKyberNetwork.sol");
+const MockNimbleNetwork = artifacts.require("MockNimbleNetwork.sol");
 const PermissionlessOrderbookReserveLister = artifacts.require("PermissionlessOrderbookReserveLister.sol");
 const MockUtils = artifacts.require("MockUtils.sol");
 
@@ -26,8 +26,8 @@ const lowRate = 42;
 const precisionUnits = (new BigNumber(10).pow(18));
 const ethAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const gasPrice = (new BigNumber(10).pow(9).mul(50));
-const initialEthKncRate = 280;
-const initialEthToKncRatePrecision = precisionUnits.mul(initialEthKncRate);
+const initialEthNmbRate = 280;
+const initialEthToNmbRatePrecision = precisionUnits.mul(initialEthNmbRate);
 const BPS = 10000;
 const ethDecimals = 18;
 
@@ -50,7 +50,7 @@ let medianizer;
 ////////////
 let token;
 let tokenAdd;
-let KNCToken;
+let NMBToken;
 let kncAddress;
 const tokenDecimals = 18;
 
@@ -68,7 +68,7 @@ let makerBurnFeeBps = 25;
 let maxOrdersPerTrade = 5;
 let minOrderSizeDollar = 1000;
 let minNewOrderWei;
-let baseKncPerEthRatePrecision;
+let baseNmbPerEthRatePrecision;
 let dollarsPerEthPrecision = precisionUnits.mul(500);
 
 contract('OrderbookReserve fuzzer', async (accounts) => {
@@ -85,17 +85,17 @@ contract('OrderbookReserve fuzzer', async (accounts) => {
 
         token = await TestToken.new("the token", "tok", 18);
         tokenAdd = token.address;
-        KNCToken = await TestToken.new("kyber crystals", "knc", 18);
-        kncAddress = KNCToken.address;
+        NMBToken = await TestToken.new("nimble crystals", "knc", 18);
+        kncAddress = NMBToken.address;
 
-        // prepare kyber network
-        mockNetwork = await MockKyberNetwork.new(admin);
+        // prepare nimble network
+        mockNetwork = await MockNimbleNetwork.new(admin);
 
         feeBurner = await FeeBurner.new(
             admin,
             kncAddress,
             mockNetwork.address,
-            initialEthToKncRatePrecision
+            initialEthToNmbRatePrecision
         );
 
         ordersFactory = await OrderListFactory.new();
@@ -111,7 +111,7 @@ contract('OrderbookReserve fuzzer', async (accounts) => {
         let rxLimits = await reserve.limits();
 //        log (rxLimits)
         minNewOrderWei = rxLimits[2].valueOf();
-        baseKncPerEthRatePrecision = await reserve.kncPerEthBaseRatePrecision();
+        baseNmbPerEthRatePrecision = await reserve.kncPerEthBaseRatePrecision();
         burnToStakeFactor = await reserve.BURN_TO_STAKE_FACTOR();
         let ordersAdd = await reserve.tokenToEthList();
         let orders = OrderList.at(ordersAdd.valueOf());
@@ -121,22 +121,22 @@ contract('OrderbookReserve fuzzer', async (accounts) => {
     });
 
     beforeEach('setup reserve contract', async () => {
-        ethKncRate = initialEthKncRate;
-        let ethToKncRatePrecision = precisionUnits.mul(ethKncRate);
-        let kncToEthRatePrecision = precisionUnits.div(ethKncRate);
+        ethNmbRate = initialEthNmbRate;
+        let ethToNmbRatePrecision = precisionUnits.mul(ethNmbRate);
+        let kncToEthRatePrecision = precisionUnits.div(ethNmbRate);
 
-        await mockNetwork.setPairRate(ethAddress, kncAddress, ethToKncRatePrecision);
+        await mockNetwork.setPairRate(ethAddress, kncAddress, ethToNmbRatePrecision);
         await mockNetwork.setPairRate(kncAddress, ethAddress, kncToEthRatePrecision);
 
-        await feeBurner.setKNCRate();
+        await feeBurner.setNMBRate();
 
         reserve = await OrderbookReserve.new(kncAddress, tokenAdd, feeBurner.address, network, medianizer.address,
                 ordersFactory.address, minOrderSizeDollar, maxOrdersPerTrade, makerBurnFeeBps);
         await reserve.init();
 
-        await reserve.setKncPerEthBaseRate();
+        await reserve.setNmbPerEthBaseRate();
 
-        baseKncPerEthRatePrecision = await reserve.kncPerEthBaseRatePrecision();
+        baseNmbPerEthRatePrecision = await reserve.kncPerEthBaseRatePrecision();
     });
 
     it("run order simulator in loop. verify simulator results and on chain results match", async() => {
@@ -373,13 +373,13 @@ async function makerDeposit(maker, ethWei, tokenTwei, kncTwei) {
 
     await token.approve(reserve.address, tokenTwei);
     await reserve.depositToken(maker, tokenTwei);
-    await KNCToken.approve(reserve.address, kncTwei);
-    await reserve.depositKncForFee(maker, kncTwei);
+    await NMBToken.approve(reserve.address, kncTwei);
+    await reserve.depositNmbForFee(maker, kncTwei);
     await reserve.depositEther(maker, {from: maker, value: ethWei});
 
     if(needReserveReset) {
-        log("reserve sim reset next. min: " + minNewOrderWei + " init " + initialEthToKncRatePrecision + " dec " + tokenDecimals)
-        ReserveSim.reset(minNewOrderWei, initialEthToKncRatePrecision, tokenDecimals);
+        log("reserve sim reset next. min: " + minNewOrderWei + " init " + initialEthToNmbRatePrecision + " dec " + tokenDecimals)
+        ReserveSim.reset(minNewOrderWei, initialEthToNmbRatePrecision, tokenDecimals);
         needReserveReset = false;
     }
     ReserveSim.deposit(maker, ethWei, tokenTwei, kncTwei);
@@ -400,7 +400,7 @@ async function sim_withdraw(maker, fund, amount) {
                 break;
 
             case 'knc':
-                await reserve.withdrawKncFee(amount, {from: maker});
+                await reserve.withdrawNmbFee(amount, {from: maker});
                 break;
 
             default:
@@ -661,20 +661,20 @@ async function makerCompareFunds(maker) {
     assert.equal(makerTokens.valueOf(), simFunds['token'].valueOf(), "Token funds mismatch. simfund : " +
         simFunds['token'].valueOf() + " onchain: " + makerTokens.valueOf());
 
-    let makerKncAmount = await reserve.makerKnc(maker);
-    assert.equal(makerKncAmount.valueOf(), simFunds['knc'].valueOf(), "KNC funds mismatch. simfund : " +
-        simFunds['knc'].valueOf() + " onchain: " + makerKncAmount.valueOf());
+    let makerNmbAmount = await reserve.makerNmb(maker);
+    assert.equal(makerNmbAmount.valueOf(), simFunds['knc'].valueOf(), "NMB funds mismatch. simfund : " +
+        simFunds['knc'].valueOf() + " onchain: " + makerNmbAmount.valueOf());
 
-    let makerUnlockedKnc = await reserve.makerUnlockedKnc(maker);
-    assert.equal(makerUnlockedKnc.valueOf(), simFunds['unlockedKnc'].valueOf(), "unlockedKnc funds mismatch. sim : " +
-        simFunds['unlockedKnc'].valueOf() + " onchain: " + makerUnlockedKnc.valueOf());
+    let makerUnlockedNmb = await reserve.makerUnlockedNmb(maker);
+    assert.equal(makerUnlockedNmb.valueOf(), simFunds['unlockedNmb'].valueOf(), "unlockedNmb funds mismatch. sim : " +
+        simFunds['unlockedNmb'].valueOf() + " onchain: " + makerUnlockedNmb.valueOf());
 
     let makerTotalWei = await reserve.makerTotalOrdersWei(maker);
     assert.equal(makerTotalWei.valueOf(), simFunds['totalWei'].valueOf(), "total orders wei mismatch. sim : " +
         simFunds['totalWei'].valueOf() + " onchain: " + makerTotalWei.valueOf());
 
     log("maker: " + maker + " eth: " + makerEth.valueOf() + " tokens: " + makerTokens.valueOf() + " knc: " +
-        makerKncAmount.valueOf() + " unlockedKnc " + makerUnlockedKnc.valueOf() + " totalWei: " + makerTotalWei.valueOf());
+        makerNmbAmount.valueOf() + " unlockedNmb " + makerUnlockedNmb.valueOf() + " totalWei: " + makerTotalWei.valueOf());
 }
 
 function calcRateFromQty(srcAmount, dstAmount, srcDecimals, dstDecimals) {

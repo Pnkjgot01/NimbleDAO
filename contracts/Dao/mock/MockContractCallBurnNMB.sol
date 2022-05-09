@@ -1,16 +1,16 @@
 pragma solidity 0.6.6;
 
-import "../KyberFeeHandler.sol";
+import "../NimbleFeeHandler.sol";
 
 
-contract MockContractCallBurnKnc {
-    KyberFeeHandler public feeHandler;
+contract MockContractCallBurnNmb {
+    NimbleFeeHandler public feeHandler;
 
-    constructor(KyberFeeHandler _feeHandler) public {
+    constructor(NimbleFeeHandler _feeHandler) public {
         feeHandler = _feeHandler;
     }
 
-    function callBurnKnc() public {
-        feeHandler.burnKnc();
+    function callBurnNmb() public {
+        feeHandler.burnNmb();
     }
 }

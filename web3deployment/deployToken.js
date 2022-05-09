@@ -124,8 +124,8 @@ async function main() {
     console.log("deploying test token");
 
     let kncToken = {};
-    kncToken.symbol = "KNC";
-    kncToken.name = "KyberNetwork";
+    kncToken.symbol = "NMB";
+    kncToken.name = "NimbleNetwork";
     kncToken.decimals = 18;
     await deployToken(kncToken);
 

@@ -34,9 +34,9 @@ module.exports.genNextOp = function genNextOp(loop, numRuns) {
     return NO_ACTION;
 }
 
-// Option 1: amount smaller than staker's KNC balance
+// Option 1: amount smaller than staker's NMB balance
 // Option 2: zero deposit
-// Option 3: amount larger than staker's KNC balance
+// Option 3: amount larger than staker's NMB balance
 module.exports.genDeposit = async function genDeposit(kncToken, stakers) {
     let result = {
         'staker': '',

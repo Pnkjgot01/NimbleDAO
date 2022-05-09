@@ -1,6 +1,6 @@
 const TestToken = artifacts.require("TestToken.sol");
 // using mock contract here, as we need to read the hasInited value
-const MockKyberStaking = artifacts.require("MockKyberStaking.sol");
+const MockNimbleStaking = artifacts.require("MockNimbleStaking.sol");
 
 const Helper = require("../helper.js");
 const BN = web3.utils.BN;
@@ -21,21 +21,21 @@ let kncToken;
 const tokenDecimals = 18;
 
 // staking and its params
-let kyberStaking;
+let nimbleStaking;
 let epochPeriod = new BN(1000);
 let firstBlockTimestamp;
 
-contract('KyberStaking simulator', async (accounts) => {
-    before('one time init: Stakers, KyberStaking, KNC token', async() => {
+contract('NimbleStaking simulator', async (accounts) => {
+    before('one time init: Stakers, NimbleStaking, NMB token', async() => {
         admin = accounts[1];
         daoOperator = accounts[2];
         stakers = accounts.slice(5,); // 5 stakers
-        kncToken = await TestToken.new("kyber Crystals", "KNC", tokenDecimals);
+        kncToken = await TestToken.new("nimble Crystals", "NMB", tokenDecimals);
 
-        // prepare kyber staking
+        // prepare nimble staking
         firstBlockTimestamp = await Helper.getCurrentBlockTime();
 
-        kyberStaking = await MockKyberStaking.new(
+        nimbleStaking = await MockNimbleStaking.new(
             kncToken.address,
             epochPeriod,
             firstBlockTimestamp + 1000,
@@ -43,8 +43,8 @@ contract('KyberStaking simulator', async (accounts) => {
           );
     });
 
-    beforeEach("deposits some KNC tokens to each account, gives allowance to staking contract", async() => {
-        // 1M KNC token
+    beforeEach("deposits some NMB tokens to each account, gives allowance to staking contract", async() => {
+        // 1M NMB token
         let kncTweiDepositAmount = new BN(1000000).mul(precisionUnits);
         let maxAllowance = (new BN(2)).pow(new BN(255));
         // transfer tokens, approve staking contract
@@ -52,15 +52,15 @@ contract('KyberStaking simulator', async (accounts) => {
             await kncToken.transfer(stakers[i], kncTweiDepositAmount);
             let expectedResult = await kncToken.balanceOf(stakers[i]);
             Helper.assertEqual(expectedResult, kncTweiDepositAmount, "staker did not receive tokens");
-            await kncToken.approve(kyberStaking.address, maxAllowance, {from: stakers[i]});
-            expectedResult = await kncToken.allowance(stakers[i], kyberStaking.address);
+            await kncToken.approve(nimbleStaking.address, maxAllowance, {from: stakers[i]});
+            expectedResult = await kncToken.allowance(stakers[i], nimbleStaking.address);
             Helper.assertEqual(expectedResult, maxAllowance, "staker did not give sufficient allowance");
         }
     });
 
-    it(`fuzz tests kyberStaking contract with ${NUM_RUNS} loops`, async() => {
+    it(`fuzz tests nimbleStaking contract with ${NUM_RUNS} loops`, async() => {
         await StakeSimulator.doFuzzStakeTests(
-            kyberStaking, NUM_RUNS, kncToken, stakers, epochPeriod
+            nimbleStaking, NUM_RUNS, kncToken, stakers, epochPeriod
         );
     });
 });
