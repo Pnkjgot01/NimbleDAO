@@ -3,50 +3,50 @@ pragma solidity 0.6.6;
 import "../../utils/Utils5.sol";
 import "../../utils/zeppelin/ReentrancyGuard.sol";
 import "../../utils/zeppelin/SafeERC20.sol";
-import "../../IKyberDao.sol";
-import "../../IKyberFeeHandler.sol";
-import "../../IKyberNetworkProxy.sol";
-import "../../ISimpleKyberProxy.sol";
+import "../../INimbleDao.sol";
+import "../../INimbleFeeHandler.sol";
+import "../../INimbleNetworkProxy.sol";
+import "../../ISimpleNimbleProxy.sol";
 import "../../IBurnableToken.sol";
 import "./../ISanityRate.sol";
 import "../../utils/zeppelin/SafeMath.sol";
 import "../DaoOperator.sol";
 
 /**
- * @title IKyberProxy
+ * @title INimbleProxy
  *  This interface combines two interfaces.
  *  It is needed since we use one function from each of the interfaces.
  *
  */
-interface IKyberProxy is IKyberNetworkProxy, ISimpleKyberProxy {
+interface INimbleProxy is INimbleNetworkProxy, ISimpleNimbleProxy {
     // empty block
 }
 
 
 /**
- * @title kyberTokenFeeHandler
+ * @title nimbleTokenFeeHandler
  *
- * @dev kyberTokenFeeHandler works tightly with contracts kyberNetwork and kyberDao.
+ * @dev nimbleTokenFeeHandler works tightly with contracts nimbleNetwork and nimbleDao.
  *      Some events are moved to interface, for easier usage
  * @dev Terminology:
- *          Epoch - Voting campaign time frame in kyberDao.
- *              kyberDao voting campaigns are in the scope of epochs.
- *          BRR - Burn / Reward / Rebate. kyberNetwork fee is used for 3 purposes:
- *              Burning KNC
- *              Reward an address that staked knc in kyberStaking contract. AKA - stakers
+ *          Epoch - Voting campaign time frame in nimbleDao.
+ *              nimbleDao voting campaigns are in the scope of epochs.
+ *          BRR - Burn / Reward / Rebate. nimbleNetwork fee is used for 3 purposes:
+ *              Burning NMB
+ *              Reward an address that staked nmb in nimbleStaking contract. AKA - stakers
  *              Rebate reserves for supporting trades.
  * @dev Code flow:
- *      1. Accumulating && claiming Fees. Per trade on kyberNetwork, it calls handleFees() function which
+ *      1. Accumulating && claiming Fees. Per trade on nimbleNetwork, it calls handleFees() function which
  *          internally accounts for network & platform fees from the trade. Fee distribution:
- *              rewards: accumulated per epoch. can be claimed by the kyberDao after epoch is concluded.
+ *              rewards: accumulated per epoch. can be claimed by the nimbleDao after epoch is concluded.
  *              rebates: accumulated per rebate wallet, can be claimed any time.
  *              Burn: accumulated in the contract. Burned value and interval limited with safe check using
                     sanity rate.
  *              Platfrom fee: accumulated per platform wallet, can be claimed any time.
- *      2. Network Fee distribution: Per epoch kyberFeeHandler contract reads BRR distribution percentage 
- *          from kyberDao. When the data expires, kyberFeeHandler reads updated values.
+ *      2. Network Fee distribution: Per epoch nimbleFeeHandler contract reads BRR distribution percentage 
+ *          from nimbleDao. When the data expires, nimbleFeeHandler reads updated values.
  */
-contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, ReentrancyGuard {
+contract NimbleTokenFeeHandler is INimbleFeeHandler, Utils5, DaoOperator, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -67,18 +67,18 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
         uint256 burnTwei;
     }
 
-    IKyberDao public immutable kyberDao;
-    IKyberProxy public kyberProxy;
-    address public kyberNetwork;
+    INimbleDao public immutable nimbleDao;
+    INimbleProxy public nimbleProxy;
+    address public nimbleNetwork;
     IERC20 public immutable quoteToken;
-    IERC20 public immutable knc;
+    IERC20 public immutable nmb;
 
     uint256 public immutable burnBlockInterval;
     uint256 public lastBurnBlock;
 
     BRRData public brrAndEpochData;
 
-    /// @dev amount of Twei to burn for each burn knc call
+    /// @dev amount of Twei to burn for each burn nmb call
     uint256 public tweiToBurn;
 
     mapping(address => uint256) public feePerPlatformWallet;
@@ -89,7 +89,7 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
     mapping(address => mapping (uint256 => bool)) public hasClaimedReward;
     uint256 public totalPayoutBalance; // total balance in the contract that is for rebate, reward, platform fee
 
-    /// @dev use to get rate of KNC/ETH to check if rate to burn knc is normal
+    /// @dev use to get rate of NMB/ETH to check if rate to burn nmb is normal
     /// @dev index 0 is currently used contract address, indexes > 0 are older versions
     ISanityRate[] internal sanityRateContract;
 
@@ -113,46 +113,46 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
     );
 
     event EthReceived(uint256 amount);
-    event KyberDaoAddressSet(IKyberDao kyberDao);
+    event NimbleDaoAddressSet(INimbleDao nimbleDao);
     event BurnConfigSet(ISanityRate sanityRate, uint256 tweiToBurn);
     event RewardsRemovedToBurn(uint256 indexed epoch, uint256 rewardsTwei);
-    event KyberNetworkUpdated(address kyberNetwork);
-    event KyberProxyUpdated(IKyberProxy kyberProxy);
+    event NimbleNetworkUpdated(address nimbleNetwork);
+    event NimbleProxyUpdated(INimbleProxy nimbleProxy);
 
     constructor(
-        IKyberDao _kyberDao,
-        IKyberProxy _kyberProxy,
-        address _kyberNetwork,
+        INimbleDao _nimbleDao,
+        INimbleProxy _nimbleProxy,
+        address _nimbleNetwork,
         IERC20 _quoteToken,
-        IERC20 _knc,
+        IERC20 _nmb,
         uint256 _burnBlockInterval,
         address _daoOperator
     ) public DaoOperator(_daoOperator) {
-        require(_kyberDao != IKyberDao(0), "kyberDao 0");
-        require(_kyberProxy != IKyberProxy(0), "kyberNetworkProxy 0");
-        require(_kyberNetwork != address(0), "kyberNetwork 0");
+        require(_nimbleDao != INimbleDao(0), "nimbleDao 0");
+        require(_nimbleProxy != INimbleProxy(0), "nimbleNetworkProxy 0");
+        require(_nimbleNetwork != address(0), "nimbleNetwork 0");
         require(_quoteToken != IERC20(0), "quoteToken 0");
-        require(_knc != IERC20(0), "knc 0");
+        require(_nmb != IERC20(0), "nmb 0");
         require(_burnBlockInterval != 0, "_burnBlockInterval 0");
 
-        kyberDao = _kyberDao;
-        kyberProxy = _kyberProxy;
-        kyberNetwork = _kyberNetwork;
+        nimbleDao = _nimbleDao;
+        nimbleProxy = _nimbleProxy;
+        nimbleNetwork = _nimbleNetwork;
         quoteToken = _quoteToken;
-        knc = _knc;
+        nmb = _nmb;
         burnBlockInterval = _burnBlockInterval;
 
         //start with epoch 0
         updateBRRData(DEFAULT_REWARD_BPS, DEFAULT_REBATE_BPS, now, 0);
     }
 
-    modifier onlyKyberDao {
-        require(msg.sender == address(kyberDao), "only kyberDao");
+    modifier onlyNimbleDao {
+        require(msg.sender == address(nimbleDao), "only nimbleDao");
         _;
     }
 
-    modifier onlyKyberNetwork {
-        require(msg.sender == address(kyberNetwork), "only kyberNetwork");
+    modifier onlyNimbleNetwork {
+        require(msg.sender == address(nimbleNetwork), "only nimbleNetwork");
         _;
     }
 
@@ -165,7 +165,7 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
         emit EthReceived(msg.value);
     }
 
-    /// @dev handleFees function is called per trade on kyberNetwork. unless the trade is not involving any fees.
+    /// @dev handleFees function is called per trade on nimbleNetwork. unless the trade is not involving any fees.
     /// @param token Token currency of fees
     /// @param rebateWallets a list of rebate wallets that will get rebate for this trade.
     /// @param rebateBpsPerWallet percentage of rebate for each wallet, out of total rebate.
@@ -179,7 +179,7 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
         address platformWallet,
         uint256 platformFee,
         uint256 networkFee
-    ) external payable override onlyKyberNetwork nonReentrant {
+    ) external payable override onlyNimbleNetwork nonReentrant {
         require(token == quoteToken, "token not quoteToken");
         // transfer total fees from network to this contract
         uint256 totalFee = platformFee.add(networkFee);
@@ -248,8 +248,8 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
 
         // the relative part of the reward the staker is entitled to for the epoch.
         // units Precision: 10 ** 18 = 100%
-        // if the epoch is current or in the future, kyberDao will return 0 as result
-        uint256 percentageInPrecision = kyberDao.getPastEpochRewardPercentageInPrecision(staker, epoch);
+        // if the epoch is current or in the future, nimbleDao will return 0 as result
+        uint256 percentageInPrecision = nimbleDao.getPastEpochRewardPercentageInPrecision(staker, epoch);
         if (percentageInPrecision == 0) {
             return 0; // not revert, in case a wrapper wants to claim reward for multiple epochs
         }
@@ -324,27 +324,27 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
         return amountTwei;
     }
 
-    /// @dev set new kyberNetwork address by daoOperator
-    /// @param _kyberNetwork new kyberNetwork contract
-    function setNetworkContract(address _kyberNetwork) external onlyDaoOperator {
-        require(_kyberNetwork != address(0), "kyberNetwork 0");
-        if (_kyberNetwork != kyberNetwork) {
-            kyberNetwork = _kyberNetwork;
-            emit KyberNetworkUpdated(kyberNetwork);
+    /// @dev set new nimbleNetwork address by daoOperator
+    /// @param _nimbleNetwork new nimbleNetwork contract
+    function setNetworkContract(address _nimbleNetwork) external onlyDaoOperator {
+        require(_nimbleNetwork != address(0), "nimbleNetwork 0");
+        if (_nimbleNetwork != nimbleNetwork) {
+            nimbleNetwork = _nimbleNetwork;
+            emit NimbleNetworkUpdated(nimbleNetwork);
         }
     }
 
-    /// @dev Allow to set kyberNetworkProxy address by daoOperator
-    /// @param _newProxy new kyberNetworkProxy contract
-    function setKyberProxy(IKyberProxy _newProxy) external onlyDaoOperator {
-        require(_newProxy != IKyberProxy(0), "kyberNetworkProxy 0");
-        if (_newProxy != kyberProxy) {
-            kyberProxy = _newProxy;
-            emit KyberProxyUpdated(_newProxy);
+    /// @dev Allow to set nimbleNetworkProxy address by daoOperator
+    /// @param _newProxy new nimbleNetworkProxy contract
+    function setNimbleProxy(INimbleProxy _newProxy) external onlyDaoOperator {
+        require(_newProxy != INimbleProxy(0), "nimbleNetworkProxy 0");
+        if (_newProxy != nimbleProxy) {
+            nimbleProxy = _newProxy;
+            emit NimbleProxyUpdated(_newProxy);
         }
     }
 
-    /// @dev set knc sanity rate contract and amount twei to burn
+    /// @dev set nmb sanity rate contract and amount twei to burn
     /// @param _sanityRate new sanity rate contract
     /// @param _tweiToBurn new amount of twei to burn
     function setBurnConfigParams(ISanityRate _sanityRate, uint256 _tweiToBurn)
@@ -369,10 +369,10 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
     }
 
 
-    /// @dev Burn knc. The burn amount is limited. Forces block delay between burn calls.
+    /// @dev Burn nmb. The burn amount is limited. Forces block delay between burn calls.
     /// @dev only none ontract can call this function
-    /// @return kncBurnAmount amount of knc burned
-    function burnKnc() external onlyNonContract returns (uint256 kncBurnAmount) {
+    /// @return nmbBurnAmount amount of nmb burned
+    function burnnmb() external onlyNonContract returns (uint256 nmbBurnAmount) {
         // check if current block > last burn block number + num block interval
         require(block.number > lastBurnBlock + burnBlockInterval, "wait more blocks to burn");
 
@@ -388,37 +388,37 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
         srcAmount = minOf(srcAmount,tweiToBurn);
 
         // Get rate
-        uint256 kyberTokenKncRate = kyberProxy.getExpectedRateAfterFee(
+        uint256 nimbleTokennmbRate = nimbleProxy.getExpectedRateAfterFee(
             quoteToken,
-            knc,
+            nmb,
             srcAmount,
             0,
             ""
         );
-        validateTokenToKncRateToBurn(kyberTokenKncRate);
+        validateTokenTonmbRateToBurn(nimbleTokennmbRate);
 
-        // Buy some knc and burn
-        kncBurnAmount = kyberProxy.swapTokenToToken(
+        // Buy some nmb and burn
+        nmbBurnAmount = nimbleProxy.swapTokenToToken(
             quoteToken,
             srcAmount,
-            knc,
-            kyberTokenKncRate
+            nmb,
+            nimbleTokennmbRate
         );
 
-        require(IBurnableToken(address(knc)).burn(kncBurnAmount), "knc burn failed");
+        require(IBurnableToken(address(nmb)).burn(nmbBurnAmount), "nmb burn failed");
 
-        emit KncBurned(kncBurnAmount, quoteToken, srcAmount);
-        return kncBurnAmount;
+        emit nmbBurned(nmbBurnAmount, quoteToken, srcAmount);
+        return nmbBurnAmount;
     }
 
     /// @dev if no one voted for an epoch (like epoch 0), no one gets rewards - should burn it.
     ///         Will move the epoch reward amount to burn amount. So can later be burned.
-    ///         calls kyberDao contract to check if there were any votes for this epoch.
+    ///         calls nimbleDao contract to check if there were any votes for this epoch.
     /// @param epoch epoch number to check.
     function makeEpochRewardBurnable(uint256 epoch) external {
-        require(kyberDao != IKyberDao(0), "kyberDao not set");
+        require(nimbleDao != INimbleDao(0), "nimbleDao not set");
 
-        require(kyberDao.shouldBurnRewardForEpoch(epoch), "should not burn reward");
+        require(nimbleDao.shouldBurnRewardForEpoch(epoch), "should not burn reward");
 
         uint256 rewardAmount = rewardsPerEpoch[epoch];
         require(rewardAmount > 0, "reward is 0");
@@ -439,12 +439,12 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
         sanityRates = sanityRateContract;
     }
 
-    /// @dev return latest knc/eth rate from sanity rate contract
-    function getLatestSanityRate() external view returns (uint256 kncToEthSanityRate) {
+    /// @dev return latest nmb/eth rate from sanity rate contract
+    function getLatestSanityRate() external view returns (uint256 nmbToEthSanityRate) {
         if (sanityRateContract.length > 0 && sanityRateContract[0] != ISanityRate(0)) {
-            kncToEthSanityRate = sanityRateContract[0].latestAnswer();
+            nmbToEthSanityRate = sanityRateContract[0].latestAnswer();
         } else {
-            kncToEthSanityRate = 0; 
+            nmbToEthSanityRate = 0; 
         }
     }
 
@@ -460,10 +460,10 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
         (rewardBps, rebateBps, expiryTimestamp, epoch) = readBRRData();
 
         // Check current timestamp
-        if (now > expiryTimestamp && kyberDao != IKyberDao(0)) {
+        if (now > expiryTimestamp && nimbleDao != INimbleDao(0)) {
             uint256 burnBps;
 
-            (burnBps, rewardBps, rebateBps, epoch, expiryTimestamp) = kyberDao
+            (burnBps, rewardBps, rebateBps, epoch, expiryTimestamp) = nimbleDao
                 .getLatestBRRDataWithCache();
             require(burnBps.add(rewardBps).add(rebateBps) == BPS, "Bad BRR values");
             
@@ -547,24 +547,24 @@ contract KyberTokenFeeHandler is IKyberFeeHandler, Utils5, DaoOperator, Reentran
         require(totalRebateBps <= BPS, "rebates more then 100%");
     }
 
-    function validateTokenToKncRateToBurn(uint256 rateTokenToKnc) internal view {
+    function validateTokenTonmbRateToBurn(uint256 rateTokenTonmb) internal view {
         // No validation for now
-        // require(rateEthToKnc <= MAX_RATE, "ethToKnc rate out of bounds");
-        // require(rateEthToKnc > 0, "ethToKnc rate is 0");
+        // require(rateEthTonmb <= MAX_RATE, "ethTonmb rate out of bounds");
+        // require(rateEthTonmb > 0, "ethTonmb rate is 0");
         // require(sanityRateContract.length > 0, "no sanity rate contract");
         // require(sanityRateContract[0] != ISanityRate(0), "sanity rate is 0x0, burning is blocked");
 
-        // // get latest knc/eth rate from sanity contract
-        // uint256 kncToEthRate = sanityRateContract[0].latestAnswer();
-        // require(kncToEthRate > 0, "sanity rate is 0");
-        // require(kncToEthRate <= MAX_RATE, "sanity rate out of bounds");
+        // // get latest nmb/eth rate from sanity contract
+        // uint256 nmbToEthRate = sanityRateContract[0].latestAnswer();
+        // require(nmbToEthRate > 0, "sanity rate is 0");
+        // require(nmbToEthRate <= MAX_RATE, "sanity rate out of bounds");
 
-        // uint256 sanityEthToKncRate = PRECISION.mul(PRECISION).div(kncToEthRate);
+        // uint256 sanityEthTonmbRate = PRECISION.mul(PRECISION).div(nmbToEthRate);
 
         // // rate shouldn't be SANITY_RATE_DIFF_BPS lower than sanity rate
         // require(
-        //     rateEthToKnc.mul(BPS) >= sanityEthToKncRate.mul(BPS.sub(SANITY_RATE_DIFF_BPS)),
-        //     "kyberNetwork eth to knc rate too low"
+        //     rateEthTonmb.mul(BPS) >= sanityEthTonmbRate.mul(BPS.sub(SANITY_RATE_DIFF_BPS)),
+        //     "nimbleNetwork eth to nmb rate too low"
         // );
     }
 }

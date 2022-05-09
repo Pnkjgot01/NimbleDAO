@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const KNC_MINIMAL_TX_AMOUNT = 100
+const NMB_MINIMAL_TX_AMOUNT = 100
 const RETRIALS = 60
 
 const solc = require("solc")
@@ -29,16 +29,16 @@ const input = {
     "VolumeImbalanceRecorder.sol" : fs.readFileSync(contractPath + 'VolumeImbalanceRecorder.sol', 'utf8'),
     "FeeBurner.sol" : fs.readFileSync(contractPath + 'FeeBurner.sol', 'utf8'),
     "WhiteListInterface.sol" : fs.readFileSync(contractPath + 'WhiteListInterface.sol', 'utf8'),
-    "KyberNetwork.sol" : fs.readFileSync(contractPath + 'KyberNetwork.sol', 'utf8'),
-    "KyberNetworkInterface.sol" : fs.readFileSync(contractPath + 'KyberNetworkInterface.sol', 'utf8'),
+    "NimbleNetwork.sol" : fs.readFileSync(contractPath + 'NimbleNetwork.sol', 'utf8'),
+    "NimbleNetworkInterface.sol" : fs.readFileSync(contractPath + 'NimbleNetworkInterface.sol', 'utf8'),
     "SimpleNetworkInterface.sol" : fs.readFileSync(contractPath + 'SimpleNetworkInterface.sol', 'utf8'),
-    "KyberNetworkProxyInterface.sol" : fs.readFileSync(contractPath + 'KyberNetworkProxyInterface.sol', 'utf8'),
-    "KyberNetworkProxy.sol" : fs.readFileSync(contractPath + 'KyberNetworkProxy.sol', 'utf8'),
+    "NimbleNetworkProxyInterface.sol" : fs.readFileSync(contractPath + 'NimbleNetworkProxyInterface.sol', 'utf8'),
+    "NimbleNetworkProxy.sol" : fs.readFileSync(contractPath + 'NimbleNetworkProxy.sol', 'utf8'),
     "WhiteList.sol" : fs.readFileSync(contractPath + 'WhiteList.sol', 'utf8'),
-    "KyberReserveInterface.sol" : fs.readFileSync(contractPath + 'KyberReserveInterface.sol', 'utf8'),
+    "NimbleReserveInterface.sol" : fs.readFileSync(contractPath + 'NimbleReserveInterface.sol', 'utf8'),
     "Withdrawable.sol" : fs.readFileSync(contractPath + 'Withdrawable.sol', 'utf8'),
-    "KyberReserve.sol" : fs.readFileSync(contractPath + 'KyberReserve.sol', 'utf8'),
-    "KyberReserveV1.sol" : fs.readFileSync(contractPath + 'previousContracts/KyberReserveV1.sol', 'utf8'),
+    "NimbleReserve.sol" : fs.readFileSync(contractPath + 'NimbleReserve.sol', 'utf8'),
+    "NimbleReserveV1.sol" : fs.readFileSync(contractPath + 'previousContracts/NimbleReserveV1.sol', 'utf8'),
     "WrapConversionRate.sol" : fs.readFileSync(contractPath + 'wrapperContracts/WrapConversionRate.sol', 'utf8'),
     "WrapFeeBurner.sol" : fs.readFileSync(contractPath + 'wrapperContracts/WrapFeeBurner.sol', 'utf8'),
     "WrapperBase.sol" : fs.readFileSync(contractPath + 'wrapperContracts/WrapperBase.sol', 'utf8'),
@@ -64,12 +64,12 @@ let nonce;
 let errors = 0;
 let txs = 0;
 let networkAddress;
-let kncTokenAddress;
+let nmbTokenAddress;
 let feeBurnerAddress;
 let feeBurnerWrapperAddress;
 let networkContract;
 let feeBurnerContract;
-let kncTokenContract;
+let nmbTokenContract;
 let feeBurnerWrapperContract;
 let wallets;
 let feeSharingWallets;
@@ -82,8 +82,8 @@ function weiToEthString(wei) {
     return BigNumber(wei).div(10 ** 18).toString()
 }
 
-function kncWeiToKNCString(KNCWei) {
-    return BigNumber(KNCWei).div(10 ** 18).toString()
+function nmbWeiToNMBString(NMBWei) {
+    return BigNumber(NMBWei).div(10 ** 18).toString()
 }
 
 function getSender(){
@@ -172,15 +172,15 @@ async function sendTx(txObject) {
 
 async function enoughReserveFeesToBurn(reserveAddress) {
     let reserveFeeToBurn = (await feeBurnerContract.methods.reserveFeeToBurn(reserveAddress).call()).toLowerCase();
-    console.log("reserveFeeToBurn", kncWeiToKNCString(reserveFeeToBurn))
-    return (reserveFeeToBurn.toString() >= KNC_MINIMAL_TX_AMOUNT)
+    console.log("reserveFeeToBurn", nmbWeiToNMBString(reserveFeeToBurn))
+    return (reserveFeeToBurn.toString() >= NMB_MINIMAL_TX_AMOUNT)
 }
 
 async function enoughWalletFeesToSend(reserveAddress, walletAddress)
 {
     let walletFeeToSend = (await feeBurnerContract.methods.reserveFeeToWallet(reserveAddress, walletAddress).call()).toLowerCase();
-    console.log("walletFeeToSend", kncWeiToKNCString(walletFeeToSend))
-    return (walletFeeToSend.toString() >= KNC_MINIMAL_TX_AMOUNT)
+    console.log("walletFeeToSend", nmbWeiToNMBString(walletFeeToSend))
+    return (walletFeeToSend.toString() >= NMB_MINIMAL_TX_AMOUNT)
 }
 
 async function burnReservesFees(reserveAddress) {
@@ -217,24 +217,24 @@ async function sendFeesToWallets(reserveAddress) {
     }
 }
 
-async function validateReserveKNCWallet(reserveAddress) {
-    console.log("validateReserveKNCWallet")
+async function validateReserveNMBWallet(reserveAddress) {
+    console.log("validateReserveNMBWallet")
 
-    let reserveKNCWallet = await feeBurnerContract.methods.reserveKNCWallet(reserveAddress).call();
-    console.log("reserveKNCWallet", reserveKNCWallet)
+    let reserveNMBWallet = await feeBurnerContract.methods.reserveNMBWallet(reserveAddress).call();
+    console.log("reserveNMBWallet", reserveNMBWallet)
  
-    let reserveWalletBalance = await kncTokenContract.methods.balanceOf(reserveKNCWallet).call();
-    console.log("reserveWalletBalance", kncWeiToKNCString(reserveWalletBalance));
+    let reserveWalletBalance = await nmbTokenContract.methods.balanceOf(reserveNMBWallet).call();
+    console.log("reserveWalletBalance", nmbWeiToNMBString(reserveWalletBalance));
 
-    let reserveWalletAllowance = await kncTokenContract.methods.allowance(reserveKNCWallet, feeBurnerAddress).call();
-    console.log("reserveWalletAllowance", kncWeiToKNCString(reserveWalletAllowance));
+    let reserveWalletAllowance = await nmbTokenContract.methods.allowance(reserveNMBWallet, feeBurnerAddress).call();
+    console.log("reserveWalletAllowance", nmbWeiToNMBString(reserveWalletAllowance));
 
-    let walletUsableKnc = BigNumber.min(reserveWalletAllowance, reserveWalletBalance)
-    console.log("walletUsableKnc", kncWeiToKNCString(walletUsableKnc));
+    let walletUsablenmb = BigNumber.min(reserveWalletAllowance, reserveWalletBalance)
+    console.log("walletUsablenmb", nmbWeiToNMBString(walletUsablenmb));
 
     let totalFeesToBurnAndSend
     let reserveFeeToBurn = await feeBurnerContract.methods.reserveFeeToBurn(reserveAddress).call();
-    console.log("reserveFeeToBurn", kncWeiToKNCString(reserveFeeToBurn))
+    console.log("reserveFeeToBurn", nmbWeiToNMBString(reserveFeeToBurn))
     totalFeesToBurnAndSend = reserveFeeToBurn
 
     walletAddresses = getAllWalletAddresses()
@@ -242,16 +242,16 @@ async function validateReserveKNCWallet(reserveAddress) {
         walletAddress = walletAddresses[walletAddressIndex];
         console.log("walletAddress", walletAddress)
         let walletFeeToSend = await feeBurnerContract.methods.reserveFeeToWallet(reserveAddress, walletAddress).call();
-        console.log("walletFeeToSend", kncWeiToKNCString(walletFeeToSend))
+        console.log("walletFeeToSend", nmbWeiToNMBString(walletFeeToSend))
         totalFeesToBurnAndSend = BigNumber(totalFeesToBurnAndSend).add(walletFeeToSend)
     }
-    console.log("totalFeesToBurnAndSend", kncWeiToKNCString(totalFeesToBurnAndSend))
+    console.log("totalFeesToBurnAndSend", nmbWeiToNMBString(totalFeesToBurnAndSend))
 
-    if (BigNumber(walletUsableKnc).lt(totalFeesToBurnAndSend))
+    if (BigNumber(walletUsablenmb).lt(totalFeesToBurnAndSend))
     {
         console.log()
         console.log()
-        console.log("validation error. walletUsableKnc " + kncWeiToKNCString(walletUsableKnc) + " is less than totalFeesToBurnAndSend " + kncWeiToKNCString(totalFeesToBurnAndSend))
+        console.log("validation error. walletUsablenmb " + nmbWeiToNMBString(walletUsablenmb) + " is less than totalFeesToBurnAndSend " + nmbWeiToNMBString(totalFeesToBurnAndSend))
         console.log()
         console.log()
         errors += 1
@@ -266,8 +266,8 @@ function getConfig() {
         jsonOutput = JSON.parse(content);
         networkAddress = jsonOutput["internal network"]
         console.log("networkAddress", networkAddress)
-        kncTokenAddress = jsonOutput["tokens"]["KNC"]["address"]
-        console.log("kncTokenAddress", kncTokenAddress)
+        nmbTokenAddress = jsonOutput["tokens"]["NMB"]["address"]
+        console.log("nmbTokenAddress", nmbTokenAddress)
         wallets = jsonOutput["wallets"]
         console.log("wallets", wallets)
       }
@@ -280,7 +280,7 @@ function getConfig() {
 async function getAbis() {
     const output = await solc.compile({ sources: input }, 1);
     erc20Abi = output.contracts["ERC20Interface.sol:ERC20"].interface;
-    networkAbi = output.contracts["KyberNetwork.sol:KyberNetwork"].interface;
+    networkAbi = output.contracts["NimbleNetwork.sol:NimbleNetwork"].interface;
     feeBurnerAbi = output.contracts["FeeBurner.sol:FeeBurner"].interface;
     feeBurnerWrapperAbi = output.contracts["WrapFeeBurner.sol:WrapFeeBurner"].interface;
 }
@@ -304,7 +304,7 @@ async function doMain() {
 
     // get contracts from abi and above addresses
     networkContract = new web3.eth.Contract(JSON.parse(networkAbi), networkAddress);
-    kncTokenContract = new web3.eth.Contract(JSON.parse(erc20Abi), kncTokenAddress);
+    nmbTokenContract = new web3.eth.Contract(JSON.parse(erc20Abi), nmbTokenAddress);
 
     // get additional addresses from contracts
     let reserves = await networkContract.methods.getReserves().call();
@@ -343,7 +343,7 @@ async function doMain() {
         console.log();
         console.log("reserveAddress", reserveAddress)
         console.log("-------------------------------------");
-        canHandleReserve = await validateReserveKNCWallet(reserveAddress)
+        canHandleReserve = await validateReserveNMBWallet(reserveAddress)
         if (canHandleReserve) {
             await burnReservesFees(reserveAddress);
             await sendFeesToWallets(reserveAddress);

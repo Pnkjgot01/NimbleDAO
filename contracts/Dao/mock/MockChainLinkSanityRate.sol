@@ -6,8 +6,8 @@ import "../ISanityRate.sol";
 contract MockChainLinkSanityRate is ISanityRate {
     uint256 latestAnswerValue;
 
-    function setLatestKncToEthRate(uint256 _kncEthRate) external {
-        latestAnswerValue = _kncEthRate;
+    function setLatestNmbToEthRate(uint256 _nmbEthRate) external {
+        latestAnswerValue = _nmbEthRate;
     }
 
     function latestAnswer() external view override returns (uint256) {

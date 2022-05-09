@@ -1,27 +1,27 @@
 pragma solidity 0.6.6;
 
 import "../EpochUtils.sol";
-import "../KyberStaking.sol";
+import "../NimbleStaking.sol";
 
 
-/// @notice Mock Malicious KyberDao tries to re-enter withdraw function in Staking
-contract MockMaliciousKyberDaoReentrancy is EpochUtils {
-    KyberStaking public staking;
-    IERC20 public knc;
+/// @notice Mock Malicious NimbleDao tries to re-enter withdraw function in Staking
+contract MockMaliciousNimbleDaoReentrancy is EpochUtils {
+    NimbleStaking public staking;
+    IERC20 public nmb;
 
     uint256 totalDeposit = 0;
 
     constructor(
         uint256 _epochPeriod,
         uint256 _startTimestamp,
-        KyberStaking _staking,
-        IERC20 _knc
+        NimbleStaking _staking,
+        IERC20 _nmb
     ) public {
         epochPeriodInSeconds = _epochPeriod;
         firstEpochStartTimestamp = _startTimestamp;
         staking = _staking;
-        knc = _knc;
-        require(_knc.approve(address(_staking), 2**255));
+        nmb = _nmb;
+        require(_nmb.approve(address(_staking), 2**255));
     }
 
     function deposit(uint256 amount) public {

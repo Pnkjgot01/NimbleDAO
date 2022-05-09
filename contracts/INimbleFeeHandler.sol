@@ -7,7 +7,7 @@ interface INimbleFeeHandler {
     event RewardPaid(address indexed staker, uint256 indexed epoch, IERC20 indexed token, uint256 amount);
     event RebatePaid(address indexed rebateWallet, IERC20 indexed token, uint256 amount);
     event PlatformFeePaid(address indexed platformWallet, IERC20 indexed token, uint256 amount);
-    event KncBurned(uint256 nmbTWei, IERC20 indexed token, uint256 amount);
+    event nmbBurned(uint256 nmbTWei, IERC20 indexed token, uint256 amount);
 
     function handleFees(
         IERC20 token,
