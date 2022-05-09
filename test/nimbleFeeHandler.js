@@ -5,9 +5,9 @@ const BN = web3.utils.BN;
 const MockNimbleDao = artifacts.require("MockNimbleDao.sol");
 const BadNimbleDao = artifacts.require("MaliciousNimbleDao.sol");
 const FeeHandler = artifacts.require("NimbleFeeHandler.sol");
-const BurnKncSanityRate = artifacts.require("MockChainLinkSanityRate.sol");
+const BurnnmbSanityRate = artifacts.require("MockChainLinkSanityRate.sol");
 const BadFeeHandler = artifacts.require("MaliciousFeeHandler.sol");
-const MockContractCallBurnKnc = artifacts.require("MockContractCallBurnKnc.sol");
+const MockContractCallBurnnmb = artifacts.require("MockContractCallBurnnmb.sol");
 const Token = artifacts.require("Token.sol");
 const BadToken = artifacts.require("TestTokenNotReturn.sol");
 const Proxy = artifacts.require("SimpleNimbleProxy.sol");
@@ -21,18 +21,18 @@ const MockStakerClaimRewardReentrancy = artifacts.require("MockStakerClaimReward
 const {BPS, precisionUnits, ethDecimals, ethAddress, zeroAddress, zeroBN, MAX_RATE} = require("../helper.js");
 const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
-const KNC_DECIMALS = 18;
+const NMB_DECIMALS = 18;
 const BURN_BLOCK_INTERVAL = 3;
 const SANITY_RATE_DIFF = 1000; // 10%
 
-let kyberNetwork;
+let nimbleNetwork;
 let proxy;
 let user;
 let user2;
 let daoSetter;
 let daoOperator;
 let mockNimbleDao;
-let knc;
+let nmb;
 let feeHandler;
 let rewardInBPS = new BN(3000);
 let rebateInBPS = new BN(5000);
@@ -40,10 +40,10 @@ let epoch;
 let expiryTimestamp;
 let sanityRate;
 
-let ethToKncPrecision = precisionUnits.div(new BN(200)); // 1 eth --> 200 knc
-let kncToEthPrecision = precisionUnits.mul(new BN(200));
+let ethTonmbPrecision = precisionUnits.div(new BN(200)); // 1 eth --> 200 nmb
+let nmbToEthPrecision = precisionUnits.mul(new BN(200));
 let rebateWallets = [];
-let oneKnc = new BN(10).pow(new BN(KNC_DECIMALS));
+let onenmb = new BN(10).pow(new BN(NMB_DECIMALS));
 let oneEth = new BN(10).pow(new BN(ethDecimals));
 let weiToBurn = precisionUnits.mul(new BN(2)); // 2 eth
 
@@ -68,22 +68,22 @@ contract('NimbleFeeHandler', function(accounts) {
         );
 
         proxy = await Proxy.new();
-        kyberNetwork = accounts[7];
+        nimbleNetwork = accounts[7];
 
-        knc = await Token.new("NimbleNetworkCrystal", "KNC", KNC_DECIMALS);
-        await knc.transfer(proxy.address, oneKnc.mul(new BN(10000)));
+        nmb = await Token.new("NimbleNetworkCrystal", "NMB", NMB_DECIMALS);
+        await nmb.transfer(proxy.address, onenmb.mul(new BN(10000)));
         await Helper.sendEtherWithPromise(accounts[9], proxy.address, oneEth.mul(new BN(100)));
 
-        await proxy.setPairRate(ethAddress, knc.address, ethToKncPrecision);
-        await proxy.setPairRate(knc.address, ethAddress, kncToEthPrecision);
+        await proxy.setPairRate(ethAddress, nmb.address, ethTonmbPrecision);
+        await proxy.setPairRate(nmb.address, ethAddress, nmbToEthPrecision);
     });
 
     beforeEach("Deploy new feeHandler instance", async() => {
         // deploy new sanity rate instance
-        sanityRate = await BurnKncSanityRate.new();
-        await sanityRate.setLatestKncToEthRate(kncToEthPrecision);
+        sanityRate = await BurnnmbSanityRate.new();
+        await sanityRate.setLatestnmbToEthRate(nmbToEthPrecision);
 
-        feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+        feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
         await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
         await feeHandler.setBurnConfigParams(sanityRate.address, weiToBurn, {from: daoOperator});
         await feeHandler.getBRR();
@@ -100,7 +100,7 @@ contract('NimbleFeeHandler', function(accounts) {
 
         it("FeeDistributed (no BRR)", async() => {
             let platformWallet = accounts[1];
-            let txResult = await feeHandler.handleFees(ethAddress, [], [], platformWallet, oneEth, zeroBN, {from: kyberNetwork, value: oneEth});
+            let txResult = await feeHandler.handleFees(ethAddress, [], [], platformWallet, oneEth, zeroBN, {from: nimbleNetwork, value: oneEth});
             expectEvent(txResult, 'FeeDistributed', {
                 token: ethAddress,
                 platformWallet: platformWallet,
@@ -124,7 +124,7 @@ contract('NimbleFeeHandler', function(accounts) {
             let currentRewardBps = BRRData.rewardBps;
             let currentRebateBps = BRRData.rebateBps;
 
-            let txResult = await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet, platformWallet, platformFeeWei, feeBRRWei, {from: kyberNetwork, value: sendVal});
+            let txResult = await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet, platformWallet, platformFeeWei, feeBRRWei, {from: nimbleNetwork, value: sendVal});
 
             let expectedRewardWei = oneEth.mul(currentRewardBps).div(BPS);
             let expectedRebateWei = oneEth.mul(currentRebateBps).div(BPS);
@@ -145,7 +145,7 @@ contract('NimbleFeeHandler', function(accounts) {
         });
 
         it("RewardPaid", async() => {
-            feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
             let sendVal = oneEth;
             let rebateBpsPerWallet = [new BN(2000), new BN(3000), new BN(5000)];
 
@@ -236,14 +236,14 @@ contract('NimbleFeeHandler', function(accounts) {
         });
 
         it("NimbleDaoAddressSet", async() => {
-            feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
             let txResult = await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
             expectEvent(txResult, "NimbleDaoAddressSet", {
-                kyberDao: mockNimbleDao.address
+                nimbleDao: mockNimbleDao.address
             });
         });
 
-        it("KncBurned", async() => {
+        it("nmbBurned", async() => {
             let networkFeeBps = new BN(25);
             let sendVal = oneEth.mul(new BN(30));
             let burnPerCall = await feeHandler.weiToBurn();
@@ -258,11 +258,11 @@ contract('NimbleFeeHandler', function(accounts) {
                     rebateWallets, rebateBpsPerWallet
                 );
 
-            let txResult = await feeHandler.burnKnc();
-            let expectedEthtoKncRate = (await proxy.getExpectedRate(ethAddress, knc.address, burnPerCall)).expectedRate;
+            let txResult = await feeHandler.burnnmb();
+            let expectedEthtonmbRate = (await proxy.getExpectedRate(ethAddress, nmb.address, burnPerCall)).expectedRate;
 
-            expectEvent(txResult, "KncBurned", {
-                kncTWei: (burnPerCall.sub(burnPerCall.mul(networkFeeBps).div(BPS))).mul(expectedEthtoKncRate).div(precisionUnits),
+            expectEvent(txResult, "nmbBurned", {
+                nmbTWei: (burnPerCall.sub(burnPerCall.mul(networkFeeBps).div(BPS))).mul(expectedEthtonmbRate).div(precisionUnits),
                 token: ethAddress,
                 amount: burnPerCall
             });
@@ -308,42 +308,42 @@ contract('NimbleFeeHandler', function(accounts) {
     describe("should test null values in ctor arguments", async() => {
         it("daoSetter 0", async() => {
             await expectRevert(
-                FeeHandler.new(zeroAddress, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator),
+                FeeHandler.new(zeroAddress, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator),
                 "daoSetter 0"
             );
         });
 
         it("proxy 0", async() => {
             await expectRevert(
-                FeeHandler.new(daoSetter, zeroAddress, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator),
-                "kyberNetworkProxy 0"
+                FeeHandler.new(daoSetter, zeroAddress, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator),
+                "nimbleNetworkProxy 0"
             );
         });
 
         it("network 0", async() => {
             await expectRevert(
-                FeeHandler.new(daoSetter, proxy.address, zeroAddress, knc.address, BURN_BLOCK_INTERVAL, daoOperator),
-                "kyberNetwork 0"
+                FeeHandler.new(daoSetter, proxy.address, zeroAddress, nmb.address, BURN_BLOCK_INTERVAL, daoOperator),
+                "nimbleNetwork 0"
             );
         });
 
-        it("knc 0", async() => {
+        it("nmb 0", async() => {
             await expectRevert(
-                FeeHandler.new(daoSetter, proxy.address, kyberNetwork, zeroAddress, BURN_BLOCK_INTERVAL, daoOperator),
-                "knc 0"
+                FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, zeroAddress, BURN_BLOCK_INTERVAL, daoOperator),
+                "nmb 0"
             );
         });
 
         it("burnBlockInterval 0", async() => {
             await expectRevert(
-                FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, zeroBN, daoOperator),
+                FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, zeroBN, daoOperator),
                 "_burnBlockInterval 0"
             );
         });
 
         it("daoOperator 0", async() => {
             await expectRevert(
-                FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, zeroAddress),
+                FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, zeroAddress),
                 "daoOperator is 0"
             );
         });
@@ -384,7 +384,7 @@ contract('NimbleFeeHandler', function(accounts) {
 
         it("should revert if burnBps causes overflow", async() => {
             let badNimbleDao = await BadNimbleDao.new(rewardInBPS, rebateInBPS, epoch, expiryTimestamp);
-            feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
             await feeHandler.setDaoContract(badNimbleDao.address, {from: daoSetter});
             await badNimbleDao.setFeeHandler(feeHandler.address);
             await badNimbleDao.setMockBRR(new BN(2).pow(new BN(256)).sub(new BN(1)), BPS, new BN(1));
@@ -395,7 +395,7 @@ contract('NimbleFeeHandler', function(accounts) {
 
         it("should revert if rewardBps causes overflow", async() => {
             let badNimbleDao = await BadNimbleDao.new(rewardInBPS, rebateInBPS, epoch, expiryTimestamp);
-            feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
             await feeHandler.setDaoContract(badNimbleDao.address, {from: daoSetter});
             await badNimbleDao.setFeeHandler(feeHandler.address);
             await badNimbleDao.setMockBRR(BPS, new BN(2).pow(new BN(256)).sub(new BN(1)), new BN(1));
@@ -406,7 +406,7 @@ contract('NimbleFeeHandler', function(accounts) {
 
         it("should revert if rebateBps overflows", async() => {
             let badNimbleDao = await BadNimbleDao.new(rewardInBPS, rebateInBPS, epoch, expiryTimestamp);
-            feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
             await feeHandler.setDaoContract(badNimbleDao.address, {from: daoSetter});
             await badNimbleDao.setFeeHandler(feeHandler.address);
             await badNimbleDao.setMockBRR(BPS, new BN(1), new BN(2).pow(new BN(256)).sub(new BN(1)));
@@ -417,7 +417,7 @@ contract('NimbleFeeHandler', function(accounts) {
 
         it("should revert if bad BRR values are returned", async() => {
             let badNimbleDao = await BadNimbleDao.new(rewardInBPS, rebateInBPS, epoch, expiryTimestamp);
-            feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
             await feeHandler.setDaoContract(badNimbleDao.address, {from: daoSetter});
             await badNimbleDao.setFeeHandler(feeHandler.address);
             await badNimbleDao.setMockBRR(zeroBN, zeroBN, zeroBN);
@@ -487,7 +487,7 @@ contract('NimbleFeeHandler', function(accounts) {
             let platformWallet = accounts[1];
             await expectRevert(
                 feeHandler.handleFees(ethAddress, [], [], platformWallet, oneEth, zeroBN, {from: user, value: oneEth}),
-                "only kyberNetwork"
+                "only nimbleNetwork"
             );
         });
 
@@ -521,7 +521,7 @@ contract('NimbleFeeHandler', function(accounts) {
             let sendVal = platformFeeWei.add(feeBRRWei);
 
             await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                {from: kyberNetwork, value: sendVal});
+                {from: nimbleNetwork, value: sendVal});
 
             let expectedTotalReward = sendVal.mul(currentRewardBps).div(BPS);
             let expectedRebate = sendVal.mul(currentRebateBps).div(BPS);
@@ -536,7 +536,7 @@ contract('NimbleFeeHandler', function(accounts) {
 
             sendVal = oneEth.div(new BN(33));
             await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, sendVal,
-                {from: kyberNetwork, value: sendVal});
+                {from: nimbleNetwork, value: sendVal});
 
             expectedTotalReward = expectedTotalReward.add(sendVal.mul(currentRewardBps).div(BPS));
             expectedRebate = sendVal.mul(currentRebateBps).div(BPS);
@@ -561,8 +561,8 @@ contract('NimbleFeeHandler', function(accounts) {
             let feeBRRWei = oneEth;
             let sendVal = platformFeeWei.add(feeBRRWei);
             await expectRevert(
-                feeHandler.handleFees(knc.address, [], [] , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal}),
+                feeHandler.handleFees(nmb.address, [], [] , platformWallet, platformFeeWei, feeBRRWei,
+                    {from: nimbleNetwork, value: sendVal}),
                 "token not eth"
             );
         });
@@ -574,14 +574,14 @@ contract('NimbleFeeHandler', function(accounts) {
             let sendVal = platformFeeWei;
             await expectRevert(
                 feeHandler.handleFees(ethAddress, [], [] , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal}),
+                    {from: nimbleNetwork, value: sendVal}),
                 "msg.value not equal to total fees"
             );
 
             sendVal = feeBRRWei;
             await expectRevert(
                 feeHandler.handleFees(ethAddress, [], [] , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal}),
+                    {from: nimbleNetwork, value: sendVal}),
                 "msg.value not equal to total fees"
             );
 
@@ -589,7 +589,7 @@ contract('NimbleFeeHandler', function(accounts) {
             sendVal = feeBRRWei.mul(new BN(3));
             await expectRevert(
                 feeHandler.handleFees(ethAddress, [], [] , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal}),
+                    {from: nimbleNetwork, value: sendVal}),
                 "msg.value not equal to total fees"
             );
         });
@@ -717,10 +717,10 @@ contract('NimbleFeeHandler', function(accounts) {
                 const platformFeeWei = zeroBN;
                 let feeBRRWei = oneEth;
                 let sendVal = platformFeeWei.add(feeBRRWei);
-                feeHandler = await BadFeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await BadFeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                {from: kyberNetwork, value: sendVal});
+                {from: nimbleNetwork, value: sendVal});
 
                 await feeHandler.setTotalPayoutBalance(zeroBN);
                 await expectRevert.unspecified(
@@ -731,7 +731,7 @@ contract('NimbleFeeHandler', function(accounts) {
 
         describe("staking rewards", async() => {
             beforeEach("init contracts before each test", async() => {
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
 
                 const BRRData = await feeHandler.readBRRData();
                 currentEpoch = BRRData.epoch;
@@ -1080,13 +1080,13 @@ contract('NimbleFeeHandler', function(accounts) {
 
                 let claim = precisionUnits;
 
-                feeHandler = await BadFeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await BadFeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
 
                 const BRRData = await feeHandler.readBRRData();
                 currentEpoch = BRRData.epoch;
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                {from: kyberNetwork, value: sendVal});
+                {from: nimbleNetwork, value: sendVal});
 
                 await feeHandler.setTotalPayoutBalance(zeroBN);
                 await feeHandler.setDaoContract(user, {from: daoSetter});
@@ -1099,7 +1099,7 @@ contract('NimbleFeeHandler', function(accounts) {
             });
 
             it("reverts if get staker percentage from dao reverts", async() => {
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 let sendVal = oneEth;
                 let rebateBpsPerWallet = [new BN(2000), new BN(3000), new BN(5000)];
 
@@ -1243,10 +1243,10 @@ contract('NimbleFeeHandler', function(accounts) {
                 const feeBRRWei = oneEth;
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
-                feeHandler = await BadFeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await BadFeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                {from: kyberNetwork, value: sendVal});
+                {from: nimbleNetwork, value: sendVal});
 
                 await feeHandler.setTotalPayoutBalance(zeroBN);
                 await expectRevert.unspecified(
@@ -1256,7 +1256,7 @@ contract('NimbleFeeHandler', function(accounts) {
         });
 
         describe("burning", async() => {
-            it("burn KNC test correct burn amount for full burn per call", async() => {
+            it("burn NMB test correct burn amount for full burn per call", async() => {
                 let sendVal = oneEth.mul(new BN(30));
                 let burnPerCall = await feeHandler.weiToBurn();
 
@@ -1267,14 +1267,14 @@ contract('NimbleFeeHandler', function(accounts) {
 
                 let feeHandlerBalance = await Helper.getBalancePromise(feeHandler.address);
 
-                await feeHandler.burnKnc();
+                await feeHandler.burnnmb();
                 let feeHandlerBalanceAfter = await Helper.getBalancePromise(feeHandler.address);
                 let expectedBalanceAfter = feeHandlerBalance.sub(burnPerCall);
 
                 Helper.assertEqual(feeHandlerBalanceAfter, expectedBalanceAfter);
             });
 
-            it("burn KNC test correct burn amount partial burn", async() => {
+            it("burn NMB test correct burn amount partial burn", async() => {
                 let sendVal = oneEth;
 
                 await callHandleFeeAndVerifyValues(
@@ -1286,14 +1286,14 @@ contract('NimbleFeeHandler', function(accounts) {
                 let feeHandlerBalance = await Helper.getBalancePromise(feeHandler.address);
                 const expectedBurn = feeHandlerBalance.sub(totalPayout0);
 
-                await feeHandler.burnKnc();
+                await feeHandler.burnnmb();
                 let feeHandlerBalanceAfter = await Helper.getBalancePromise(feeHandler.address);
                 let expectedBalanceAfter = feeHandlerBalance.sub(expectedBurn);
 
                 Helper.assertEqual(feeHandlerBalanceAfter, expectedBalanceAfter);
             });
 
-            it("burn KNC test correct burn amount of new weiToBurn (new weiToBurn <= totalFee)", async() => {
+            it("burn NMB test correct burn amount of new weiToBurn (new weiToBurn <= totalFee)", async() => {
                 let sendVal = oneEth;
 
                 await callHandleFeeAndVerifyValues(
@@ -1308,19 +1308,19 @@ contract('NimbleFeeHandler', function(accounts) {
                 let newWeiToBurn = maxBurn.sub(new BN(1));
 
                 await feeHandler.setBurnConfigParams(sanityRate.address, newWeiToBurn, {from: daoOperator});
-                await sanityRate.setLatestKncToEthRate(kncToEthPrecision);
+                await sanityRate.setLatestnmbToEthRate(nmbToEthPrecision);
 
                 // expect to burn only weiToBurn
                 const expectedBurn = newWeiToBurn;
 
-                await feeHandler.burnKnc();
+                await feeHandler.burnnmb();
 
                 let feeHandlerBalanceAfter = await Helper.getBalancePromise(feeHandler.address);
                 let expectedBalanceAfter = feeHandlerBalance.sub(expectedBurn);
                 Helper.assertEqual(feeHandlerBalanceAfter, expectedBalanceAfter);
             });
 
-            it("burn KNC test correct burn amount of new weiToBurn (new weiToBurn > totalFee)", async() => {
+            it("burn NMB test correct burn amount of new weiToBurn (new weiToBurn > totalFee)", async() => {
                 let sendVal = oneEth;
 
                 await callHandleFeeAndVerifyValues(
@@ -1335,19 +1335,19 @@ contract('NimbleFeeHandler', function(accounts) {
                 let newWeiToBurn = maxBurn.add(new BN(1));
 
                 await feeHandler.setBurnConfigParams(sanityRate.address, newWeiToBurn, {from: daoOperator});
-                await sanityRate.setLatestKncToEthRate(kncToEthPrecision);
+                await sanityRate.setLatestnmbToEthRate(nmbToEthPrecision);
 
                 // expect to burn all
                 const expectedBurn = maxBurn;
 
-                await feeHandler.burnKnc();
+                await feeHandler.burnnmb();
 
                 let feeHandlerBalanceAfter = await Helper.getBalancePromise(feeHandler.address);
                 let expectedBalanceAfter = feeHandlerBalance.sub(expectedBurn);
                 Helper.assertEqual(feeHandlerBalanceAfter, expectedBalanceAfter);
             });
 
-            it("burn KNC test correct burn_wait_interval for next burn", async() => {
+            it("burn NMB test correct burn_wait_interval for next burn", async() => {
                 let sendVal = oneEth.mul(new BN(30));
                 let blockInterval = await feeHandler.burnBlockInterval();
 
@@ -1356,7 +1356,7 @@ contract('NimbleFeeHandler', function(accounts) {
                         rebateWallets, rebateBpsPerWallet
                     );
 
-                await feeHandler.burnKnc();
+                await feeHandler.burnnmb();
                 let lastBurnBlock = new BN(await web3.eth.getBlockNumber());
                 let nextBurnBlock = lastBurnBlock.add(blockInterval);
                 // console.log("next burn block " + nextBurnBlock);
@@ -1364,17 +1364,17 @@ contract('NimbleFeeHandler', function(accounts) {
                 let currentBlock = await web3.eth.getBlockNumber();
                 while (nextBurnBlock > currentBlock) {
                     await expectRevert(
-                        feeHandler.burnKnc(),
+                        feeHandler.burnnmb(),
                         "wait more blocks to burn"
                     );
                     currentBlock = await web3.eth.getBlockNumber();
                     // log("block:" + currentBlock)
                 }
-                await feeHandler.burnKnc();
+                await feeHandler.burnnmb();
             });
 
             it("reverts if contract has insufficient ETH for burning", async() => {
-                feeHandler = await BadFeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await BadFeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 let burnPerCall = await feeHandler.weiToBurn();
                 let platformWallet = accounts[9];
                 let platformFeeWei = zeroBN;
@@ -1382,52 +1382,52 @@ contract('NimbleFeeHandler', function(accounts) {
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal});
+                    {from: nimbleNetwork, value: sendVal});
 
                 feeHandlerBalance = await Helper.getBalancePromise(feeHandler.address);
                 await feeHandler.withdrawEther(feeHandlerBalance.sub(burnPerCall.add(new BN(1))), user);
 
                 await expectRevert.unspecified(
-                    feeHandler.burnKnc()
+                    feeHandler.burnnmb()
                 );
             });
 
-            it("reverts if ETH-KNC > MAX_RATE", async() => {
+            it("reverts if ETH-NMB > MAX_RATE", async() => {
                 let platformWallet = accounts[9];
                 let platformFeeWei = zeroBN;
                 let feeBRRWei = oneEth;
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal})
+                    {from: nimbleNetwork, value: sendVal})
 
-                //ETH-KNC RATE > MAX_RATE
-                await proxy.setPairRate(ethAddress, knc.address, MAX_RATE.add(new BN(1)));
+                //ETH-NMB RATE > MAX_RATE
+                await proxy.setPairRate(ethAddress, nmb.address, MAX_RATE.add(new BN(1)));
                 await expectRevert(
-                    feeHandler.burnKnc(),
-                    "ethToKnc rate out of bounds"
+                    feeHandler.burnnmb(),
+                    "ethTonmb rate out of bounds"
                 );
             });
 
-            it("reverts if ETH-KNC = 0", async() => {
+            it("reverts if ETH-NMB = 0", async() => {
                 let platformWallet = accounts[9];
                 let platformFeeWei = zeroBN;
                 let feeBRRWei = oneEth;
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal})
+                    {from: nimbleNetwork, value: sendVal})
 
-                //ETH-KNC RATE = 0
-                await proxy.setPairRate(ethAddress, knc.address, 0);
+                //ETH-NMB RATE = 0
+                await proxy.setPairRate(ethAddress, nmb.address, 0);
                 await expectRevert(
-                    feeHandler.burnKnc(),
-                    "ethToKnc rate is 0"
+                    feeHandler.burnnmb(),
+                    "ethTonmb rate is 0"
                 );
             });
 
             it("reverts no sanity rate contract", async() => {
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
 
                 let platformWallet = accounts[9];
@@ -1435,22 +1435,22 @@ contract('NimbleFeeHandler', function(accounts) {
                 let feeBRRWei = oneEth;
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
-                await proxy.setPairRate(ethAddress, knc.address, ethToKncPrecision);
+                await proxy.setPairRate(ethAddress, nmb.address, ethTonmbPrecision);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal})
+                    {from: nimbleNetwork, value: sendVal})
 
                 await expectRevert(
-                    feeHandler.burnKnc(),
+                    feeHandler.burnnmb(),
                     "no sanity rate contract"
                 );
             });
 
             it("reverts sanity rate 0", async() => {
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
-                sanityRate = await BurnKncSanityRate.new();
-                await sanityRate.setLatestKncToEthRate(0);
+                sanityRate = await BurnnmbSanityRate.new();
+                await sanityRate.setLatestnmbToEthRate(0);
                 await feeHandler.setBurnConfigParams(sanityRate.address, weiToBurn, {from: daoOperator});
 
                 let platformWallet = accounts[9];
@@ -1458,22 +1458,22 @@ contract('NimbleFeeHandler', function(accounts) {
                 let feeBRRWei = oneEth;
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
-                await proxy.setPairRate(ethAddress, knc.address, ethToKncPrecision);
+                await proxy.setPairRate(ethAddress, nmb.address, ethTonmbPrecision);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal})
+                    {from: nimbleNetwork, value: sendVal})
 
                 await expectRevert(
-                    feeHandler.burnKnc(),
+                    feeHandler.burnnmb(),
                     "sanity rate is 0"
                 );
             });
 
             it("reverts sanity rate > MAX_RATE", async() => {
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
-                sanityRate = await BurnKncSanityRate.new();
-                await sanityRate.setLatestKncToEthRate(MAX_RATE.add(new BN(1)));
+                sanityRate = await BurnnmbSanityRate.new();
+                await sanityRate.setLatestnmbToEthRate(MAX_RATE.add(new BN(1)));
                 await feeHandler.setBurnConfigParams(sanityRate.address, weiToBurn, {from: daoOperator});
 
                 let platformWallet = accounts[9];
@@ -1481,22 +1481,22 @@ contract('NimbleFeeHandler', function(accounts) {
                 let feeBRRWei = oneEth;
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
-                await proxy.setPairRate(ethAddress, knc.address, ethToKncPrecision);
+                await proxy.setPairRate(ethAddress, nmb.address, ethTonmbPrecision);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal})
+                    {from: nimbleNetwork, value: sendVal})
 
                 await expectRevert(
-                    feeHandler.burnKnc(),
+                    feeHandler.burnnmb(),
                     "sanity rate out of bounds"
                 );
             });
 
-            it("reverts sanity rate and ethToKnc rate diff > MAX_DIFF of 10%", async() => {
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            it("reverts sanity rate and ethTonmb rate diff > MAX_DIFF of 10%", async() => {
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
-                sanityRate = await BurnKncSanityRate.new();
-                await sanityRate.setLatestKncToEthRate(MAX_RATE.add(new BN(1)));
+                sanityRate = await BurnnmbSanityRate.new();
+                await sanityRate.setLatestnmbToEthRate(MAX_RATE.add(new BN(1)));
                 await feeHandler.setBurnConfigParams(sanityRate.address, weiToBurn, {from: daoOperator});
 
                 let platformWallet = accounts[9];
@@ -1505,27 +1505,27 @@ contract('NimbleFeeHandler', function(accounts) {
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal})
+                    {from: nimbleNetwork, value: sendVal})
 
-                await proxy.setPairRate(ethAddress, knc.address, ethToKncPrecision);
+                await proxy.setPairRate(ethAddress, nmb.address, ethTonmbPrecision);
 
                 // make sanity rate more than 10% higher
-                ethToKncRate = ethToKncPrecision;
-                ethToKncRate = ethToKncRate.mul(BPS).div(BPS.sub(new BN(SANITY_RATE_DIFF)));
-                ethToKncRate.iadd(new BN(1));
-                await sanityRate.setLatestKncToEthRate(precisionUnits.mul(precisionUnits).div(ethToKncRate));
+                ethTonmbRate = ethTonmbPrecision;
+                ethTonmbRate = ethTonmbRate.mul(BPS).div(BPS.sub(new BN(SANITY_RATE_DIFF)));
+                ethTonmbRate.iadd(new BN(1));
+                await sanityRate.setLatestnmbToEthRate(precisionUnits.mul(precisionUnits).div(ethTonmbRate));
 
                 await expectRevert(
-                    feeHandler.burnKnc(),
-                    "kyberNetwork eth to knc rate too low"
+                    feeHandler.burnnmb(),
+                    "nimbleNetwork eth to nmb rate too low"
                 );
             });
 
             it("reverts only none contract can call burn", async() => {
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
-                sanityRate = await BurnKncSanityRate.new();
-                await sanityRate.setLatestKncToEthRate(MAX_RATE.add(new BN(1)));
+                sanityRate = await BurnnmbSanityRate.new();
+                await sanityRate.setLatestnmbToEthRate(MAX_RATE.add(new BN(1)));
                 await feeHandler.setBurnConfigParams(sanityRate.address, weiToBurn, {from: daoOperator});
 
                 let platformWallet = accounts[9];
@@ -1534,19 +1534,19 @@ contract('NimbleFeeHandler', function(accounts) {
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal})
+                    {from: nimbleNetwork, value: sendVal})
 
-                await proxy.setPairRate(ethAddress, knc.address, ethToKncPrecision);
+                await proxy.setPairRate(ethAddress, nmb.address, ethTonmbPrecision);
 
-                let contract = await MockContractCallBurnKnc.new(feeHandler.address);
+                let contract = await MockContractCallBurnnmb.new(feeHandler.address);
                 await expectRevert(
-                    contract.callBurnKnc(),
+                    contract.callBurnnmb(),
                     "only non-contract"
                 )
             });
 
             it("reverts if sanity rate is 0", async() => {
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
                 await feeHandler.setBurnConfigParams(zeroAddress, weiToBurn, {from: daoOperator});
 
@@ -1556,27 +1556,27 @@ contract('NimbleFeeHandler', function(accounts) {
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal})
+                    {from: nimbleNetwork, value: sendVal})
 
-                await proxy.setPairRate(ethAddress, knc.address, ethToKncPrecision);
+                await proxy.setPairRate(ethAddress, nmb.address, ethTonmbPrecision);
 
                 await expectRevert(
-                    feeHandler.burnKnc(),
+                    feeHandler.burnnmb(),
                     "sanity rate is 0x0, burning is blocked"
                 )
             });
 
-            it("reverts if malicious KNC token is used, and burning fails", async() => {
-                //setup bad KNC
-                let badKNC = await BadToken.new("NimbleNetworkCrystal", "KNC", KNC_DECIMALS);
-                await badKNC.transfer(proxy.address, oneKnc.mul(new BN(10000)));
-                await proxy.setPairRate(ethAddress, badKNC.address, ethToKncPrecision);
-                await proxy.setPairRate(badKNC.address, ethAddress, kncToEthPrecision);
+            it("reverts if malicious NMB token is used, and burning fails", async() => {
+                //setup bad NMB
+                let badNMB = await BadToken.new("NimbleNetworkCrystal", "NMB", NMB_DECIMALS);
+                await badNMB.transfer(proxy.address, onenmb.mul(new BN(10000)));
+                await proxy.setPairRate(ethAddress, badNMB.address, ethTonmbPrecision);
+                await proxy.setPairRate(badNMB.address, ethAddress, nmbToEthPrecision);
 
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, badKNC.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, badNMB.address, BURN_BLOCK_INTERVAL, daoOperator);
                 await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
-                sanityRate = await BurnKncSanityRate.new();
-                await sanityRate.setLatestKncToEthRate(kncToEthPrecision);
+                sanityRate = await BurnnmbSanityRate.new();
+                await sanityRate.setLatestnmbToEthRate(nmbToEthPrecision);
                 await feeHandler.setBurnConfigParams(sanityRate.address, weiToBurn, {from: daoOperator});
 
                 let platformWallet = accounts[9];
@@ -1585,11 +1585,11 @@ contract('NimbleFeeHandler', function(accounts) {
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal})
+                    {from: nimbleNetwork, value: sendVal})
 
                 await expectRevert(
-                    feeHandler.burnKnc(),
-                    "knc burn failed"
+                    feeHandler.burnnmb(),
+                    "nmb burn failed"
                 );
             });
 
@@ -1608,8 +1608,8 @@ contract('NimbleFeeHandler', function(accounts) {
                 Helper.assertEqual(rewardAmount, zeroBN, "rewards were not burnt");
             });
 
-            it("reverts if kyberDao is not set", async() => {
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            it("reverts if nimbleDao is not set", async() => {
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
 
                 let platformWallet = accounts[1];
                 let platformFeeWei = oneEth;
@@ -1617,18 +1617,18 @@ contract('NimbleFeeHandler', function(accounts) {
                 let feeBRRWei = oneEth;
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
-                await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei, {from: kyberNetwork, value: sendVal});
+                await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei, {from: nimbleNetwork, value: sendVal});
 
                 let currentEpoch = new BN(1);
 
                 await expectRevert(
                     feeHandler.makeEpochRewardBurnable(currentEpoch),
-                    "kyberDao not set"
+                    "nimbleDao not set"
                 );
             });
 
-            it("reverts if kyberDao prevents burning of reward", async() => {
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            it("reverts if nimbleDao prevents burning of reward", async() => {
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 mockNimbleDao = await MockNimbleDao.new(
                     rewardInBPS,
                     rebateInBPS,
@@ -1645,7 +1645,7 @@ contract('NimbleFeeHandler', function(accounts) {
                 let sendVal = platformFeeWei.add(feeBRRWei);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet, platformWallet, platformFeeWei, feeBRRWei,
-                    {from: kyberNetwork, value: sendVal});
+                    {from: nimbleNetwork, value: sendVal});
 
                 await expectRevert(
                     feeHandler.makeEpochRewardBurnable(currentEpoch),
@@ -1666,10 +1666,10 @@ contract('NimbleFeeHandler', function(accounts) {
                 const platformFeeWei = zeroBN;
                 let feeBRRWei = oneEth;
                 let sendVal = platformFeeWei.add(feeBRRWei);
-                feeHandler = await BadFeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await BadFeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
 
                 await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet , platformWallet, platformFeeWei, feeBRRWei,
-                {from: kyberNetwork, value: sendVal});
+                {from: nimbleNetwork, value: sendVal});
 
                 await feeHandler.setTotalPayoutBalance(zeroBN);
                 await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
@@ -1705,10 +1705,10 @@ contract('NimbleFeeHandler', function(accounts) {
 
             it("test records correct burn config params", async() => {
                 // redeploy
-                sanityRate = await BurnKncSanityRate.new();
-                await sanityRate.setLatestKncToEthRate(kncToEthPrecision);
+                sanityRate = await BurnnmbSanityRate.new();
+                await sanityRate.setLatestnmbToEthRate(nmbToEthPrecision);
 
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
                 await feeHandler.getBRR();
                 await mockNimbleDao.setFeeHandler(feeHandler.address);
@@ -1780,12 +1780,12 @@ contract('NimbleFeeHandler', function(accounts) {
                 Helper.assertEqual(user2, sanityRateContracts[3]);
             });
 
-            it("test returns correct latest kncToEth rate from sanity rate", async function() {
+            it("test returns correct latest nmbToEth rate from sanity rate", async function() {
                 // redeploy
-                sanityRate = await BurnKncSanityRate.new();
-                await sanityRate.setLatestKncToEthRate(kncToEthPrecision);
+                sanityRate = await BurnnmbSanityRate.new();
+                await sanityRate.setLatestnmbToEthRate(nmbToEthPrecision);
 
-                feeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+                feeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
                 await feeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
                 await feeHandler.getBRR();
                 await mockNimbleDao.setFeeHandler(feeHandler.address);
@@ -1795,29 +1795,29 @@ contract('NimbleFeeHandler', function(accounts) {
 
                 await feeHandler.setBurnConfigParams(sanityRate.address, weiToBurn, {from: daoOperator});
 
-                await sanityRate.setLatestKncToEthRate(0);
+                await sanityRate.setLatestnmbToEthRate(0);
                 Helper.assertEqual(0, await feeHandler.getLatestSanityRate());
-                await sanityRate.setLatestKncToEthRate(10);
+                await sanityRate.setLatestnmbToEthRate(10);
                 Helper.assertEqual(10, await feeHandler.getLatestSanityRate());
-                await sanityRate.setLatestKncToEthRate(1000);
+                await sanityRate.setLatestnmbToEthRate(1000);
                 Helper.assertEqual(1000, await feeHandler.getLatestSanityRate());
-                await sanityRate.setLatestKncToEthRate(kncToEthPrecision);
-                Helper.assertEqual(kncToEthPrecision, await feeHandler.getLatestSanityRate());
+                await sanityRate.setLatestnmbToEthRate(nmbToEthPrecision);
+                Helper.assertEqual(nmbToEthPrecision, await feeHandler.getLatestSanityRate());
 
                 // change new sanity rate
-                let newSanity = await BurnKncSanityRate.new();
+                let newSanity = await BurnnmbSanityRate.new();
                 await feeHandler.setBurnConfigParams(newSanity.address, weiToBurn, {from: daoOperator});
 
                 Helper.assertEqual(0, await feeHandler.getLatestSanityRate());
-                await newSanity.setLatestKncToEthRate(10000);
+                await newSanity.setLatestnmbToEthRate(10000);
                 Helper.assertEqual(10000, await feeHandler.getLatestSanityRate());
 
                 // change old sanity rate, value shouldn't be affected
-                await sanityRate.setLatestKncToEthRate(20000);
+                await sanityRate.setLatestnmbToEthRate(20000);
                 Helper.assertEqual(10000, await feeHandler.getLatestSanityRate());
                 // change new sanity rate, value should be updated
-                await newSanity.setLatestKncToEthRate(kncToEthPrecision);
-                Helper.assertEqual(kncToEthPrecision, await feeHandler.getLatestSanityRate());
+                await newSanity.setLatestnmbToEthRate(nmbToEthPrecision);
+                Helper.assertEqual(nmbToEthPrecision, await feeHandler.getLatestSanityRate());
 
                 // set sanity rate to 0
                 await feeHandler.setBurnConfigParams(zeroAddress, weiToBurn, {from: daoOperator});
@@ -1861,7 +1861,7 @@ contract('NimbleFeeHandler', function(accounts) {
 
                 //init feeHandler
                 await mockNimbleDao.setNetworkFeeBps(new BN(10));
-                feeHandler = await FeeHandler.new(mockNimbleDao.address, networkProxy.address, network.address, knc.address, new BN(30), mockNimbleDao.address);
+                feeHandler = await FeeHandler.new(mockNimbleDao.address, networkProxy.address, network.address, nmb.address, new BN(30), mockNimbleDao.address);
 
                 claimer = await ReentrancyFeeClaimer.new(networkProxy.address, feeHandler.address, token.address, srcQty);
                 await token.transfer(claimer.address, srcQty);
@@ -1932,19 +1932,19 @@ contract('NimbleFeeHandler', function(accounts) {
         storage = accounts[8];
         tempNetwork = await NimbleNetwork.new(admin, storage);
         tempProxy = await NimbleNetworkProxy.new(admin);
-        tempFeeHandler = await FeeHandler.new(daoSetter, tempProxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
-        Helper.assertEqual(kyberNetwork, await tempFeeHandler.kyberNetwork(), "network does not match");
+        tempFeeHandler = await FeeHandler.new(daoSetter, tempProxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
+        Helper.assertEqual(nimbleNetwork, await tempFeeHandler.nimbleNetwork(), "network does not match");
         await expectRevert(
             tempFeeHandler.setNetworkContract(accounts[0]), "only daoOperator"
         )
         await expectRevert(
-            tempFeeHandler.setNetworkContract(zeroAddress, {from: daoOperator}), "kyberNetwork 0"
+            tempFeeHandler.setNetworkContract(zeroAddress, {from: daoOperator}), "nimbleNetwork 0"
         )
         txResult = await tempFeeHandler.setNetworkContract(tempNetwork.address, {from: daoOperator});
         expectEvent(txResult, 'NimbleNetworkUpdated', {
-            kyberNetwork: tempNetwork.address,
+            nimbleNetwork: tempNetwork.address,
         });
-        Helper.assertEqual(tempNetwork.address, await tempFeeHandler.kyberNetwork(), "network does not match");
+        Helper.assertEqual(tempNetwork.address, await tempFeeHandler.nimbleNetwork(), "network does not match");
         // should not have any event if update the same current network contract
         txResult = await tempFeeHandler.setNetworkContract(tempNetwork.address, {from: daoOperator});
         for (let i = 0; i < txResult.logs.length; i++) {
@@ -1956,7 +1956,7 @@ contract('NimbleFeeHandler', function(accounts) {
         it("Test should revert new proxy is 0", async() => {
             await expectRevert(
                 feeHandler.setNimbleProxy(zeroAddress, {from: daoOperator}),
-                "kyberNetworkProxy 0"
+                "nimbleNetworkProxy 0"
             )
         });
 
@@ -1971,12 +1971,12 @@ contract('NimbleFeeHandler', function(accounts) {
             let newProxy = await NimbleNetworkProxy.new(accounts[0]);
             let txResult = await feeHandler.setNimbleProxy(newProxy.address, {from: daoOperator});
             expectEvent(txResult, "NimbleProxyUpdated", {
-                kyberProxy: newProxy.address,
+                nimbleProxy: newProxy.address,
             });
             let anotherProxy = accounts[0];
             txResult = await feeHandler.setNimbleProxy(anotherProxy, {from: daoOperator});
             expectEvent(txResult, "NimbleProxyUpdated", {
-                kyberProxy: anotherProxy
+                nimbleProxy: anotherProxy
             });
             txResult = await feeHandler.setNimbleProxy(anotherProxy, {from: daoOperator});
             for (let i = 0; i < txResult.logs.length; i++) {
@@ -1984,43 +1984,43 @@ contract('NimbleFeeHandler', function(accounts) {
             }
         });
 
-        it("Test burn KNC after updating proxy", async() => {
+        it("Test burn NMB after updating proxy", async() => {
             let tempNetwork = accounts[0];
 
-            let sanityRate = await BurnKncSanityRate.new();
-            await sanityRate.setLatestKncToEthRate(kncToEthPrecision);
+            let sanityRate = await BurnnmbSanityRate.new();
+            await sanityRate.setLatestnmbToEthRate(nmbToEthPrecision);
 
             let tempProxy = await Proxy.new();
-            await knc.transfer(tempProxy.address, oneKnc.mul(new BN(10000)));
+            await nmb.transfer(tempProxy.address, onenmb.mul(new BN(10000)));
             await Helper.sendEtherWithPromise(accounts[9], tempProxy.address, oneEth);
 
-            await tempProxy.setPairRate(ethAddress, knc.address, ethToKncPrecision);
-            await tempProxy.setPairRate(knc.address, ethAddress, kncToEthPrecision);
+            await tempProxy.setPairRate(ethAddress, nmb.address, ethTonmbPrecision);
+            await tempProxy.setPairRate(nmb.address, ethAddress, nmbToEthPrecision);
 
-            let tempFeeHandler = await FeeHandler.new(daoSetter, tempProxy.address, tempNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            let tempFeeHandler = await FeeHandler.new(daoSetter, tempProxy.address, tempNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
             await tempFeeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
             await tempFeeHandler.setBurnConfigParams(sanityRate.address, weiToBurn, {from: daoOperator});
             await tempFeeHandler.getBRR();
             await tempFeeHandler.setNimbleProxy(tempProxy.address, {from: daoOperator});
 
             await tempFeeHandler.handleFees(ethAddress, [], [], zeroAddress, 0, oneEth, {from: tempNetwork, value: oneEth});
-            await tempFeeHandler.burnKnc();
+            await tempFeeHandler.burnnmb();
 
             await Helper.increaseBlockNumber(BURN_BLOCK_INTERVAL);
 
             // new proxy
             tempProxy = await Proxy.new();
-            await knc.transfer(tempProxy.address, oneKnc.mul(new BN(10000)));
+            await nmb.transfer(tempProxy.address, onenmb.mul(new BN(10000)));
             await Helper.sendEtherWithPromise(accounts[9], tempProxy.address, oneEth);
-            await tempProxy.setPairRate(ethAddress, knc.address, ethToKncPrecision);
-            await tempProxy.setPairRate(knc.address, ethAddress, kncToEthPrecision);
+            await tempProxy.setPairRate(ethAddress, nmb.address, ethTonmbPrecision);
+            await tempProxy.setPairRate(nmb.address, ethAddress, nmbToEthPrecision);
 
             await tempFeeHandler.handleFees(ethAddress, [], [], zeroAddress, 0, oneEth, {from: tempNetwork, value: oneEth});
 
             // set new proxy for fee handler
             await tempFeeHandler.setNimbleProxy(tempProxy.address, {from: daoOperator});
-            // burn knc
-            await tempFeeHandler.burnKnc();
+            // burn nmb
+            await tempFeeHandler.burnnmb();
         });
     });
 });
@@ -2038,7 +2038,7 @@ async function callHandleFeeAndVerifyValues(sendValWei, platformWallet, platFeeW
     let expectedPlatWalletFee = (await feeHandler.feePerPlatformWallet(platformWallet)).add(new BN(platFeeWei));
 
     // handle fees
-    await feeHandler.handleFees(ethAddress, rebateWalletArr, rebateBpsArr, platformWallet, platFeeWei, feeAmountBRR, {from: kyberNetwork, value: sendValWei});
+    await feeHandler.handleFees(ethAddress, rebateWalletArr, rebateBpsArr, platformWallet, platFeeWei, feeAmountBRR, {from: nimbleNetwork, value: sendValWei});
 
     //validate values
     let expectedRebates = [];

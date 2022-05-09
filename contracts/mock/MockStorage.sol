@@ -8,7 +8,7 @@ contract MockStorage is NimbleStorage {
         address _admin,
         INimbleHistory _networkHistory,
         INimbleHistory _feeHandlerHistory,
-        INimbleHistory _kyberDaoHistory,
+        INimbleHistory _nimbleDaoHistory,
         INimbleHistory _matchingEngineHistory
     )
         public
@@ -16,7 +16,7 @@ contract MockStorage is NimbleStorage {
             _admin,
             _networkHistory,
             _feeHandlerHistory,
-            _kyberDaoHistory,
+            _nimbleDaoHistory,
             _matchingEngineHistory
         )
     {}

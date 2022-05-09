@@ -68,7 +68,7 @@ let whiteListedAddresses = [];
 let jsonTestersCat;
 let jsonReserveAdd;
 
-let kyberNetworkAdd = '0x0';
+let nimbleNetworkAdd = '0x0';
 let ouputLogString = "";
 let ouputErrString = "";
 let nodeId = 0;
@@ -77,7 +77,7 @@ let nodeId = 0;
 ////////
 ////////
 const mainnetUrls = ['https://mainnet.infura.io',
-                     'https://semi-node.kyber.network',
+                     'https://semi-node.nimble.network',
                      'https://api.mycryptoapi.com/eth',
                      'https://api.myetherapi.com/eth',
                      'https://mew.giveth.io/'];
@@ -109,7 +109,7 @@ async function main (){
         return;
     };
 
-    await readNimbleNetwork(kyberNetworkAdd);
+    await readNimbleNetwork(nimbleNetworkAdd);
 
     //write output logs
     let fileName = deployInputJsonPath + ".log";
@@ -186,16 +186,16 @@ function printHelp () {
 }
 
 
-async function readNimbleNetwork(kyberNetworkAdd){
+async function readNimbleNetwork(nimbleNetworkAdd){
     let abi = solcOutput.contracts["NimbleNetwork.sol:NimbleNetwork"].interface;
-    Network = await new web3.eth.Contract(JSON.parse(abi), kyberNetworkAdd);
+    Network = await new web3.eth.Contract(JSON.parse(abi), nimbleNetworkAdd);
 
     //verify binary as expected.
-    let blockCode = await web3.eth.getCode(kyberNetworkAdd);
+    let blockCode = await web3.eth.getCode(nimbleNetworkAdd);
     let solcCode = '0x' + (solcOutput.contracts["NimbleNetwork.sol:NimbleNetwork"].runtimeBytecode);
 
     myLog(0, 0, (""));
-    myLog(0, 0, ("kyberNetworkAdd: " + kyberNetworkAdd));
+    myLog(0, 0, ("nimbleNetworkAdd: " + nimbleNetworkAdd));
     myLog(0, 0, ("------------------------------------------------------------"));
 
     numReserves = await Network.methods.getNumReserves().call();
@@ -475,8 +475,8 @@ async function readDeploymentJSON(filePath) {
 
 
     address = (json["network"]).toLowerCase();
-    addressesToNames[address] = "kyber-network";
-    kyberNetworkAdd = address;
+    addressesToNames[address] = "nimble-network";
+    nimbleNetworkAdd = address;
 
     address = (json["reserve"]).toLowerCase();
     addressesToNames[address] = "reserve";
@@ -512,8 +512,8 @@ async function readDeploymentJSON(filePath) {
     jsonMaxGasPrice = json["max gas price"];
     jsonNegDiffBps = json["neg diff in bps"];
     jsonMinExpectedRateSlippage = json["min expected rate slippage"];
-    jsonKNCWallet = (json["KNC wallet"]).toLowerCase();
-    jsonKNC2EthRate = json["KNC to ETH rate"];
+    jsonNMBWallet = (json["NMB wallet"]).toLowerCase();
+    jsonNMB2EthRate = json["NMB to ETH rate"];
     try {
         jsonTaxFeeBps = json["tax fees bps"];
         jsonTaxWalletAddress = json["tax wallet address"];
@@ -566,9 +566,9 @@ async function jsonVerifyTokenData (tokenData, symbol) {
     // read from web: symbol, name, decimal and see matching what we have
     let abi = solcOutput.contracts["MockERC20.sol:MockERC20"].interface;
     let ERC20 = await new web3.eth.Contract(JSON.parse(abi), address);
-    if (symbol == 'KNC') {
-        kncInst = ERC20;
-        jsonKNCAddress = address;
+    if (symbol == 'NMB') {
+        nmbInst = ERC20;
+        jsonNMBAddress = address;
     }
     ERC20Inst.push(ERC20);
     ERC20Adds.push(address);

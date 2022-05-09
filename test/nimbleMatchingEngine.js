@@ -107,24 +107,24 @@ contract('NimbleMatchingEngine', function(accounts) {
 
         it("should have admin set network contract", async() => {
             await matchingEngine.setNetworkContract(network, {from: admin});
-            let result = await matchingEngine.kyberNetwork();
+            let result = await matchingEngine.nimbleNetwork();
             Helper.assertEqual(network, result, "network not set by admin");
         });
 
         it("should not have unauthorized personnel set negligble rate diff bps", async() => {
             await expectRevert(
                 matchingEngine.setNegligibleRateDiffBps(negligibleRateDiffBps, {from: user}),
-                "only kyberNetwork"
+                "only nimbleNetwork"
             );
 
             await expectRevert(
                 matchingEngine.setNegligibleRateDiffBps(negligibleRateDiffBps, {from: operator}),
-                "only kyberNetwork"
+                "only nimbleNetwork"
             );
 
             await expectRevert(
                 matchingEngine.setNegligibleRateDiffBps(negligibleRateDiffBps, {from: admin}),
-                "only kyberNetwork"
+                "only nimbleNetwork"
             );
         });
 
@@ -158,7 +158,7 @@ contract('NimbleMatchingEngine', function(accounts) {
 
         it("should have network set storage contract", async() => {
             await matchingEngine.setNimbleStorage(storage.address, {from: admin});
-            let result = await matchingEngine.kyberStorage();
+            let result = await matchingEngine.nimbleStorage();
             Helper.assertEqual(storage.address, result, "storage not set by admin");
         });
 
@@ -201,7 +201,7 @@ contract('NimbleMatchingEngine', function(accounts) {
         it("should revert setting zero address for network", async() => {
             await expectRevert(
                 matchingEngine.setNetworkContract(zeroAddress, {from: admin}),
-                "kyberNetwork 0"
+                "nimbleNetwork 0"
             );
         });
     });

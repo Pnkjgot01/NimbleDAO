@@ -132,7 +132,7 @@ let ratesAdd = [];      // one per reserve
 let sanityRateAdd = []; // one per reserve
 let ERC20Inst = {};
 let ERC20Adds = [];
-let kncInst;
+let nmbInst;
 
 //contract instances
 let NetworkProxy;
@@ -176,8 +176,8 @@ let jsonValidDurationBlock;
 let jsonMaxGasPrice;
 let jsonNegDiffBps;
 let jsonMinExpectedRateSlippage;
-let jsonKNCWallet;
-let jsonKNC2EthRate;
+let jsonNMBWallet;
+let jsonNMB2EthRate;
 let jsonTaxFeeBps;
 let jsonTaxWalletAddress;
 let jsonFeeBurnerAdd;
@@ -186,11 +186,11 @@ let jsonWrapConversionRate;
 let jsonWrapFeeBurner;
 let jsonReserveAdd;
 
-let kyberNetworkAdd = '0x0';
+let nimbleNetworkAdd = '0x0';
 let jsonNetworkAdd = '0x0';
 let jsonOrderbookLister = '0x0';
 let jsonNetworkProxyAdd = '0x0';
-let jsonKNCAddress;
+let jsonNMBAddress;
 let nodeId = 0;
 
 
@@ -199,7 +199,7 @@ let nodeId = 0;
 ////////
 ////////
 const mainnetUrls = ['https://mainnet.infura.io',
-                     'https://semi-node.kyber.network',
+                     'https://semi-node.nimble.network',
                      'https://api.mycryptoapi.com/eth',
                      'https://api.myetherapi.com/eth',
                      'https://mew.giveth.io/'];
@@ -314,7 +314,7 @@ async function readNetworkProxy(networkProxyAdd){
     let solcCode = '0x' + (solcOutput.contracts["NimbleNetworkProxy.sol:NimbleNetworkProxy"].runtimeBytecode);
 
     myLog(0, 0, (""));
-    myLog(0, 0, ("kyber network (proxy) Address: " + networkProxyAdd));
+    myLog(0, 0, ("nimble network (proxy) Address: " + networkProxyAdd));
     myLog(0, 0, ("------------------------------------------------------------"));
 
     if (blockCode != solcCode){
@@ -330,7 +330,7 @@ async function readNetworkProxy(networkProxyAdd){
 
 
     //read addresses and create contract instances.
-    networkAddress = (await NetworkProxy.methods.kyberNetworkContract().call()).toLowerCase();
+    networkAddress = (await NetworkProxy.methods.nimbleNetworkContract().call()).toLowerCase();
     myLog((networkAddress != jsonNetworkAdd), 0, "network contract address: " + networkAddress);
 
 //    networkAddress = ('0x9ae49C0d7F8F9EF4B864e004FE86Ac8294E20950').toLowerCase();
@@ -345,16 +345,16 @@ async function readNetworkProxy(networkProxyAdd){
 
 
 
-async function readNimbleNetwork(kyberNetworkAdd){
+async function readNimbleNetwork(nimbleNetworkAdd){
     let abi = solcOutput.contracts["NimbleNetwork.sol:NimbleNetwork"].interface;
-    Network = await new web3.eth.Contract(JSON.parse(abi), kyberNetworkAdd);
+    Network = await new web3.eth.Contract(JSON.parse(abi), nimbleNetworkAdd);
 
     //verify binary as expected.
-    let blockCode = await web3.eth.getCode(kyberNetworkAdd);
+    let blockCode = await web3.eth.getCode(nimbleNetworkAdd);
     let solcCode = '0x' + (solcOutput.contracts["NimbleNetwork.sol:NimbleNetwork"].runtimeBytecode);
 
     myLog(0, 0, (""));
-    myLog(0, 0, ("internal network: " + kyberNetworkAdd));
+    myLog(0, 0, ("internal network: " + nimbleNetworkAdd));
     myLog(0, 0, ("------------------------------------------------------------"));
 
     if (blockCode != solcCode){
@@ -452,9 +452,9 @@ async function readFeeBurnerFeeSharingWallets(feeBurnerAdd) {
 
     let i = 0;
     for(let wallet in walletFeesDict) {
-        feeSharingWalletsDict["wallets"]["kyber wallet " + i] = {};
-        feeSharingWalletsDict["wallets"]["kyber wallet " + i]["id"] = wallet;
-        feeSharingWalletsDict["wallets"]["kyber wallet " + i]["fees"] = walletFeesDict[wallet];
+        feeSharingWalletsDict["wallets"]["nimble wallet " + i] = {};
+        feeSharingWalletsDict["wallets"]["nimble wallet " + i]["id"] = wallet;
+        feeSharingWalletsDict["wallets"]["nimble wallet " + i]["fees"] = walletFeesDict[wallet];
         ++i;
     }
 
@@ -467,7 +467,7 @@ async function readFeeBurnerFeeSharingWallets(feeBurnerAdd) {
 async function readWhiteListData(whiteListAddress) {
     myLog(0, 0, '');
     if(whiteListAddress == 0) {
-        myLog(0, 1, "No white list contract defined for kyber network.")
+        myLog(0, 1, "No white list contract defined for nimble network.")
         myLog(0, 0, '');
         return;
     }
@@ -727,8 +727,8 @@ async function readExpectedRateData(expectedRateAddress) {
 
     await printAdminAlertersOperators(ExpectedRate, "ExpectedRate");
 
-    let kyberAddress = (await ExpectedRate.methods.kyberNetwork().call()).toLowerCase();
-    myLog((kyberAddress != networkAddress), 0, ("kyber address: " + kyberAddress));
+    let nimbleAddress = (await ExpectedRate.methods.nimbleNetwork().call()).toLowerCase();
+    myLog((nimbleAddress != networkAddress), 0, ("nimble address: " + nimbleAddress));
     let quantityFactor = await ExpectedRate.methods.quantityFactor().call();
     assert(quantityFactor > 0, "quantity factor must be greater then 0.");
     myLog(0, 0, ("quantityFactor: " + quantityFactor));
@@ -863,8 +863,8 @@ async function readKYCReserveV1AndV2(reserveAdd, index, isNimbleReserve, blockCo
     let enabled = await await Reserve.methods.tradeEnabled().call();
     myLog((enabled == false), 0, ("trade enabled = " + enabled));
 
-    let kyber = (await Reserve.methods.kyberNetwork().call()).toLowerCase();
-    myLog((kyber != jsonNetworkAdd), 0, ("kyberNetwork " + kyber));
+    let nimble = (await Reserve.methods.nimbleNetwork().call()).toLowerCase();
+    myLog((nimble != jsonNetworkAdd), 0, ("nimbleNetwork " + nimble));
     ratesAdd[index] = (await Reserve.methods.conversionRatesContract().call()).toLowerCase();
     myLog((index == 0 && jsonRatesAdd != ratesAdd[0]), 0, ("ratesAdd " + index + ": " + ratesAdd[index]));
     sanityRateAdd[index] = await Reserve.methods.sanityRatesContract().call();
@@ -911,8 +911,8 @@ async function readOasisReserve(reserveAddress, index) {
     Reserves[index] = await new web3.eth.Contract(reserveOasisABI, reserveAddress);
     Reserve = Reserves[index];
 
-    let kyber = (await Reserve.methods.kyberNetwork().call()).toLowerCase();
-    myLog((kyber != jsonNetworkAdd), 0, ("kyberNetwork " + kyber));
+    let nimble = (await Reserve.methods.nimbleNetwork().call()).toLowerCase();
+    myLog((nimble != jsonNetworkAdd), 0, ("nimbleNetwork " + nimble));
 
     let tradeEnabled = await Reserve.methods.tradeEnabled().call();
     myLog((tradeEnabled != true), 0, ("trade enabled: " + tradeEnabled));
@@ -959,8 +959,8 @@ async function readWethReserve(reserveAddress, index) {
     Reserves[index] = await new web3.eth.Contract(reserveOasisABI, reserveAddress);
     Reserve = Reserves[index];
 
-    let kyber = (await Reserve.methods.kyberNetwork().call()).toLowerCase();
-    myLog((kyber != jsonNetworkAdd), 0, ("kyberNetwork " + kyber));
+    let nimble = (await Reserve.methods.nimbleNetwork().call()).toLowerCase();
+    myLog((nimble != jsonNetworkAdd), 0, ("nimbleNetwork " + nimble));
 
     let tradeEnabled = await Reserve.methods.tradeEnabled().call();
     myLog((tradeEnabled != true), 0, ("trade enabled: " + tradeEnabled));
@@ -1130,51 +1130,51 @@ async function readFeeBurnerDataForReserve(feeBurnerAddress, reserveAddress, ind
     if (isNimbleReserve) await printAdminAlertersOperators(FeeBurner, "FeeBurner");
     let reserveFees = await FeeBurner.methods.reserveFeesInBps(reserveAddress).call();
     myLog((reserveFees < 10), 0, ("reserveFeesInBps: " + reserveFees + " == " + bpsToPercent(reserveFees) + "%"));
-    let KNCWallet = (await FeeBurner.methods.reserveKNCWallet(reserveAddress).call()).toLowerCase();
-    let raiseFlag = (KNCWallet == 0);
-    if(isNimbleReserve) raiseFlag = raiseFlag || (jsonKNCWallet != KNCWallet);
-    myLog(raiseFlag, 0, ("reserveKNCWallet: " + KNCWallet));
+    let NMBWallet = (await FeeBurner.methods.reserveNMBWallet(reserveAddress).call()).toLowerCase();
+    let raiseFlag = (NMBWallet == 0);
+    if(isNimbleReserve) raiseFlag = raiseFlag || (jsonNMBWallet != NMBWallet);
+    myLog(raiseFlag, 0, ("reserveNMBWallet: " + NMBWallet));
 
     if(issueTokenListingDict) {
         tokenListingDict["reserve" + index]["Fee"] = reserveFees.valueOf();
-        tokenListingDict["reserve" + index]["KNC wallet"] = (KNCWallet == 0 ? "0xdeadbeaf" : KNCWallet);
+        tokenListingDict["reserve" + index]["NMB wallet"] = (NMBWallet == 0 ? "0xdeadbeaf" : NMBWallet);
     }
 
     if(!isNimbleReserve) return;
 
-    let kncWalletBalance = await kncInst.methods.balanceOf(KNCWallet).call();
-    let walletTokenBalance = await getAmountTokens(kncWalletBalance.valueOf(), jsonKNCAddress);
-    myLog((walletTokenBalance.valueOf() < 30), (walletTokenBalance.valueOf() < 70), ("reserveKNCWallet balance: " + walletTokenBalance + " KNC tokens"));
+    let nmbWalletBalance = await nmbInst.methods.balanceOf(NMBWallet).call();
+    let walletTokenBalance = await getAmountTokens(nmbWalletBalance.valueOf(), jsonNMBAddress);
+    myLog((walletTokenBalance.valueOf() < 30), (walletTokenBalance.valueOf() < 70), ("reserveNMBWallet balance: " + walletTokenBalance + " NMB tokens"));
 
     let feeToBurn = await FeeBurner.methods.reserveFeeToBurn(reserveAddress).call();
-    myLog(0, 0, ("reserveFeeToBurn: " + feeToBurn + " twei == " + await getAmountTokens(feeToBurn, jsonKNCAddress) + " KNC tokens."));
+    myLog(0, 0, ("reserveFeeToBurn: " + feeToBurn + " twei == " + await getAmountTokens(feeToBurn, jsonNMBAddress) + " NMB tokens."));
     if (isNimbleReserve) {
-        let KNCAddress = (await FeeBurner.methods.knc().call()).toLowerCase();
-        raiseFlag = isNimbleReserve && (KNCAddress != jsonKNCAddress);
-        myLog(raiseFlag, 0, ("KNCAddress: " + KNCAddress));
-        let kncPerEthRate;
+        let NMBAddress = (await FeeBurner.methods.nmb().call()).toLowerCase();
+        raiseFlag = isNimbleReserve && (NMBAddress != jsonNMBAddress);
+        myLog(raiseFlag, 0, ("NMBAddress: " + NMBAddress));
+        let nmbPerEthRate;
         try{
-            kncPerEthRate = web3.utils.toBN(await FeeBurner.methods.kncPerEthRatePrecision().call());
-            kncPerEthRate = kncPerEthRate.div(web3.utils.toBN(10 ** 18));
+            nmbPerEthRate = web3.utils.toBN(await FeeBurner.methods.nmbPerEthRatePrecision().call());
+            nmbPerEthRate = nmbPerEthRate.div(web3.utils.toBN(10 ** 18));
         } catch(e) {
-            kncPerEthRate = 631;
+            nmbPerEthRate = 631;
         }
 
-        if (doAccountingRun == true) AccountingDict["kncPerEthRate"] = kncPerEthRate.valueOf();
+        if (doAccountingRun == true) AccountingDict["nmbPerEthRate"] = nmbPerEthRate.valueOf();
 
         if (doAccountingRun == true) return;
 
-        myLog((kncPerEthRate.valueOf() == 0), (kncPerEthRate != jsonKNC2EthRate), ("kncPerEthRate: " + kncPerEthRate));
+        myLog((nmbPerEthRate.valueOf() == 0), (nmbPerEthRate != jsonNMB2EthRate), ("nmbPerEthRate: " + nmbPerEthRate));
 
-        let kyberNetwork = (await FeeBurner.methods.kyberNetwork().call()).toLowerCase();
-        myLog((kyberNetwork != jsonNetworkAdd), 0, ("kyberNetworkAdd: " + kyberNetwork));
+        let nimbleNetwork = (await FeeBurner.methods.nimbleNetwork().call()).toLowerCase();
+        myLog((nimbleNetwork != jsonNetworkAdd), 0, ("nimbleNetworkAdd: " + nimbleNetwork));
         let taxFeeBps = await FeeBurner.methods.taxFeeBps().call()
         myLog((taxFeeBps != jsonTaxFeeBps), 0, ("tax fee in bps: " + taxFeeBps + " = " + bpsToPercent(taxFeeBps) + "%"));
         let taxWalletAdd = await FeeBurner.methods.taxWallet().call()
         myLog((taxWalletAdd.toLowerCase() != jsonTaxWalletAddress.toLowerCase()), 0, ("tax wallet address: " + taxWalletAdd));
     }
     let payedSoFar = await FeeBurner.methods.feePayedPerReserve(reserveAddress).call();
-    myLog(0, 0, "Fees payed so far by reserve (burn + tax): " + await getAmountTokens(payedSoFar, jsonKNCAddress) + " knc tokens.");
+    myLog(0, 0, "Fees payed so far by reserve (burn + tax): " + await getAmountTokens(payedSoFar, jsonNMBAddress) + " nmb tokens.");
 
     if (isNimbleReserve && jsonWrapFeeBurner != 0) {
         //verify wrapper binary
@@ -1255,7 +1255,7 @@ async function readConversionRate(conversionRateAddress, reserveAddress, index, 
         tokenReader = await new web3.eth.Contract(wrapReadTokenDataABI, tokenReaderAddress);
 
         try {
-            let values = await tokenReader.methods.readQtyStepFunctions(conversionRateAddress, jsonKNCAddress).call();
+            let values = await tokenReader.methods.readQtyStepFunctions(conversionRateAddress, jsonNMBAddress).call();
             haveTokenReader = true;
         } catch(e) {
             console.log("cant get values from reader")
@@ -1317,7 +1317,7 @@ async function readConversionRate(conversionRateAddress, reserveAddress, index, 
 
     if ((readTokenDataInConvRate == false) || (issueTokenListingDict)) return;
 
-    if (isNimbleReserve) AccountingDict["kyber"] = {};
+    if (isNimbleReserve) AccountingDict["nimble"] = {};
 	else AccountingDict["other" + index] = {};
 
     myLog(0, 0, "");
@@ -1637,7 +1637,7 @@ async function readTokenDataInConversionRate(conversionRateAddress, tokenAdd, re
     }
 
     if (isNimbleReserve) {
-        AccountingDict["kyber"][tokenName] = tokenDict;
+        AccountingDict["nimble"][tokenName] = tokenDict;
     } else {
 		AccountingDict["other" + reserveIndex][tokenName] = tokenDict;
     }
@@ -1990,10 +1990,10 @@ async function readDeploymentJSON(filePath) {
 
     //this is the proxy
     address = (json["network"]).toLowerCase();
-    addName2Add(address, "kyber-network");
+    addName2Add(address, "nimble-network");
     jsonNetworkProxyAdd = address;
 
-    //internal network. with main kyber logic
+    //internal network. with main nimble logic
     try {
         address = (json["internal network"]).toLowerCase();
         addName2Add(address, "internal network");
@@ -2046,8 +2046,8 @@ async function readDeploymentJSON(filePath) {
     jsonMaxGasPrice = json["max gas price"];
     jsonNegDiffBps = json["neg diff in bps"];
     jsonMinExpectedRateSlippage = json["min expected rate slippage"];
-    jsonKNCWallet = (json["KNC wallet"]).toLowerCase();
-    jsonKNC2EthRate = json["KNC to ETH rate"];
+    jsonNMBWallet = (json["NMB wallet"]).toLowerCase();
+    jsonNMB2EthRate = json["NMB to ETH rate"];
     try {
         jsonTaxFeeBps = json["tax fees bps"];
         jsonTaxWalletAddress = json["tax wallet address"];
@@ -2101,9 +2101,9 @@ async function jsonVerifyTokenData (tokenData, symbol) {
     let abi = solcOutput.contracts["MockERC20.sol:MockERC20"].interface;
     let ERC20 = await new web3.eth.Contract(JSON.parse(abi), address);
 
-    if (symbol == 'KNC') {
-        kncInst = ERC20;
-        jsonKNCAddress = address;
+    if (symbol == 'NMB') {
+        nmbInst = ERC20;
+        jsonNMBAddress = address;
     }
     ERC20Adds.push(address);
 

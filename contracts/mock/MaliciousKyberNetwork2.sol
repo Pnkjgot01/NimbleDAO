@@ -10,13 +10,13 @@ import "../NimbleNetwork.sol";
 contract MaliciousNimbleNetwork2 is NimbleNetwork {
     uint256 public myFeeWei = 10;
 
-    constructor(address _admin, INimbleStorage _kyberStorage)
+    constructor(address _admin, INimbleStorage _nimbleStorage)
         public
-        NimbleNetwork(_admin, _kyberStorage)
+        NimbleNetwork(_admin, _nimbleStorage)
     {}
 
 // overwrite function to reduce bytecode size
-    function removeNimbleProxy(address kyberProxy) external virtual override {}
+    function removeNimbleProxy(address nimbleProxy) external virtual override {}
 
     function setMyFeeWei(uint256 fee) public {
         myFeeWei = fee;

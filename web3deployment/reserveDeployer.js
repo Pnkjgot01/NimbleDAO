@@ -301,7 +301,7 @@ async function main() {
 
   console.log("deploying conversion rates");
   [conversionRatesAddress,conversionRatesContract] = await deployContract(output, "ConversionRates.sol:ConversionRates", [sender]);
-  console.log("deploying kyber reserve");
+  console.log("deploying nimble reserve");
   [reserveAddress,reserveContract] = await deployContract(output, "NimbleReserve.sol:NimbleReserve", [networkAddress,conversionRatesAddress,sender]);
 
   console.log("rates", conversionRatesAddress);

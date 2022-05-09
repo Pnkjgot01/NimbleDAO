@@ -8,7 +8,7 @@
       "maxPerBlockImbalance": "120000000000000000000",
       "maxTotalImbalance": "180000000000000000000"
     },
-    "KNC": {
+    "NMB": {
       "name": "NimbleNetwork",
       "decimals": 18,
       "address": "0xB2f3dD487708ca7794f633D9Df57Fdb9347a7afF",
@@ -50,7 +50,7 @@
     "binance": {
       "ETH": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
       "OMG": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "KNC": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
+      "NMB": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
       "SNT": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
       "SALT": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
       "EOS": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547"
@@ -183,8 +183,8 @@
   "max gas price": "50000000000",
   "neg diff in bps": 20,
   "min expected rate slippage": 300,
-  "KNC wallet": "0x7985405a348baa90c92164b86b383c8f43ad2d96",
-  "KNC to ETH rate": 300,
+  "NMB wallet": "0x7985405a348baa90c92164b86b383c8f43ad2d96",
+  "NMB to ETH rate": 300,
   "tax wallet address": "0x7985405a348baa90c92164b86b383c8f43ad2d96",
   "tax fees bps": 2000,
   "valid duration block": 100000000,

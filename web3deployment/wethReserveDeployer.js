@@ -115,7 +115,7 @@ const input = {
 };
 
 const ethAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
-const kyberNetworkAddress = '0x706aBcE058DB29eB36578c463cf295F180a1Fe9C'; //staging
+const nimbleNetworkAddress = '0x706aBcE058DB29eB36578c463cf295F180a1Fe9C'; //staging
 const wethTokenAddress = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
 const adminAddress = '0xF9eF59dB62f56aF114380A7496Fd51172dafD41d';
 
@@ -136,13 +136,13 @@ async function main() {
         //await waitForEth();
     }
 
-    [kyberWethReserveAddress, kyberWethReserveContract] = await deployContract(
+    [nimbleWethReserveAddress, nimbleWethReserveContract] = await deployContract(
         output,
         "NimbleWethReserve.sol:NimbleWethReserve",
-        [kyberNetworkAddress, wethTokenAddress, adminAddress]
+        [nimbleNetworkAddress, wethTokenAddress, adminAddress]
     );
 
-    console.log("kyberWethReserveAddress: " + kyberWethReserveAddress)
+    console.log("nimbleWethReserveAddress: " + nimbleWethReserveAddress)
     console.log("last nonce is", nonce);
 }
 

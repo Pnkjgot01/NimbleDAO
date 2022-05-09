@@ -64,8 +64,8 @@ contract('NimbleRateHelper', accounts => {
     let numReserve = 3;
     beforeEach('init storage and dao', async () => {
       storage = await nwHelper.setupStorage(admin);
-      network = await NimbleNetwork.new(admin, kyberStorage.address);
-      await kyberStorage.setNetworkContract(network.address, {from: admin});
+      network = await NimbleNetwork.new(admin, nimbleStorage.address);
+      await nimbleStorage.setNetworkContract(network.address, {from: admin});
       await storage.addOperator(operator, {from: admin});
       //NimbleDao related init.
       expiryTimestamp = (await Helper.getCurrentBlockTime()) + 10;
@@ -171,8 +171,8 @@ contract('NimbleRateHelper', accounts => {
     let reserveId;
     before('set up apr reserve', async () => {
       storage = await nwHelper.setupStorage(admin);
-      network = await NimbleNetwork.new(admin, kyberStorage.address);
-      await kyberStorage.setNetworkContract(network.address, {from: admin});
+      network = await NimbleNetwork.new(admin, nimbleStorage.address);
+      await nimbleStorage.setNetworkContract(network.address, {from: admin});
       await storage.addOperator(operator, {from: admin});
       //NimbleDao related init.
       expiryTimestamp = (await Helper.getCurrentBlockTime()) + 10;

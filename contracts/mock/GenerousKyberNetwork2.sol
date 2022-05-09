@@ -10,9 +10,9 @@ import "../NimbleNetwork.sol";
 contract GenerousNimbleNetwork2 is NimbleNetwork {
     event GenerousTrade(int256 which, int256 more, IERC20 token);
 
-    constructor(address _admin, INimbleStorage _kyberStorage)
+    constructor(address _admin, INimbleStorage _nimbleStorage)
         public
-        NimbleNetwork(_admin, _kyberStorage)
+        NimbleNetwork(_admin, _nimbleStorage)
     {}
 
     function trade(TradeData memory tData, bytes memory hint)

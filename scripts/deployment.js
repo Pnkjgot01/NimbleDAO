@@ -12,7 +12,7 @@ const CentralizedExchange = artifacts.require("./MockExchange.sol");
 const BigNumber = require('bignumber.js');
 
 var tokenSymbol = [];//["OMG", "DGD", "CVC", "FUN", "MCO", "GNT", "ADX", "PAY",
-                   //"BAT", "KNC", "EOS", "LINK"];
+                   //"BAT", "NMB", "EOS", "LINK"];
 var tokenName = [];//[ "OmiseGO", "Digix", "Civic", "FunFair", "Monaco", "Golem",
 //"Adex", "TenX", "BasicAttention", "NimbleNetwork", "Eos", "ChainLink" ];
 
@@ -26,7 +26,7 @@ var tokenInitialReserveBalance = [];
 var reserveInitialEth;
 
 var tokenInstance = [];
-var kncInstance;
+var nmbInstance;
 var kgtInstance;
 const kgtName = "Nimble genesis token";
 const kgtSymbol = "KGT";
@@ -160,9 +160,9 @@ var deployTokens = function( owner ){
            var decimals = tokenDecimals[item];
            return TestToken.new(name, symbol, decimals, {from:owner});
        }).then(function(instance){
-           if( tokenSymbol[item] === "KNC" ) {
-             console.log("found knc");
-             kncInstance = instance;
+           if( tokenSymbol[item] === "NMB" ) {
+             console.log("found nmb");
+             nmbInstance = instance;
            }
            tokenInstance.push(instance);
        })
@@ -630,12 +630,12 @@ contract('Deployment', function(accounts) {
 
   it("create burning fees", function() {
     this.timeout(31000000);
-    initialKncRate = precisionUnits.mul(431);
-    return FeeBurner.new(accounts[0],kncInstance.address, network.address, initialKncRate).then(function(instance){
+    initialnmbRate = precisionUnits.mul(431);
+    return FeeBurner.new(accounts[0],nmbInstance.address, network.address, initialnmbRate).then(function(instance){
         feeBurner = instance;
         return feeBurner.addOperator(accounts[0],{from:accounts[0]});
     }).then(function(result){
-      return kncInstance.approve(feeBurner.address, new BigNumber(10**18).mul(10000),{from:accounts[0]});
+      return nmbInstance.approve(feeBurner.address, new BigNumber(10**18).mul(10000),{from:accounts[0]});
     }).then(function(){
       // set fees for reserve
       // 0.25% from accounts
@@ -651,7 +651,7 @@ contract('Deployment', function(accounts) {
 
   it("create expected rate", function() {
     this.timeout(31000000);
-    return ExpectedRate.new(network.address, kncInstance.address, accounts[0]).then(function(instance){
+    return ExpectedRate.new(network.address, nmbInstance.address, accounts[0]).then(function(instance){
         expectedRate = instance;
     }).then(function(){
         return expectedRate.addOperator(accounts[0]);
@@ -774,12 +774,12 @@ contract('Deployment', function(accounts) {
 
 
 it("make some optimizations", function() {
-  // send 1 twei to kyber network
+  // send 1 twei to nimble network
   return tokenInstance[1].transfer(network.address,0).then(function(){
-    // send 1 wei of knc to fee burner
+    // send 1 wei of nmb to fee burner
     return tokenInstance[1].transfer("0x001adbc838ede392b5b054a47f8b8c28f2fa9f3c",1);
   }).then(function(){
-    return kncInstance.transfer(feeBurner.address,1);
+    return nmbInstance.transfer(feeBurner.address,1);
   }).then(function(){
     return tokenInstance[1].balanceOf(network.address);
   }).then(function(result){

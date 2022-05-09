@@ -38,7 +38,7 @@ let networkProxy;
 let network;
 let storage;
 let rateHelper;
-let kyberDao;
+let nimbleDao;
 let feeHandler;
 let matchingEngine;
 let operator;
@@ -53,7 +53,7 @@ let epoch = new BN(3);
 let expiryTimestamp;
 
 //fee hanlder related
-let KNC;
+let NMB;
 let burnBlockInterval = new BN(30);
 
 //reserve data
@@ -90,8 +90,8 @@ contract('NimbleNetworkProxy', function(accounts) {
 
         //NimbleDao related init.
         expiryTimestamp = await Helper.getCurrentBlockTime() + 10;
-        kyberDao = await MockDao.new(rewardInBPS, rebateInBPS, epoch, expiryTimestamp);
-        await kyberDao.setNetworkFeeBps(networkFeeBps);
+        nimbleDao = await MockDao.new(rewardInBPS, rebateInBPS, epoch, expiryTimestamp);
+        await nimbleDao.setNetworkFeeBps(networkFeeBps);
 
         //deploy storage and network
         storage = await nwHelper.setupStorage(admin);
@@ -110,7 +110,7 @@ contract('NimbleNetworkProxy', function(accounts) {
         await storage.setEntitledRebatePerReserveType(true, false, true, false, true, true, {from: admin});
 
         rateHelper = await RateHelper.new(admin);
-        await rateHelper.setContracts(kyberDao.address, storage.address, {from: admin});
+        await rateHelper.setContracts(nimbleDao.address, storage.address, {from: admin});
 
         // setup proxy
         await networkProxy.setNimbleNetwork(network.address, {from: admin});
@@ -124,8 +124,8 @@ contract('NimbleNetworkProxy', function(accounts) {
         }
 
         //init feeHandler
-        KNC = await TestToken.new("kyber network crystal", "KNC", 18);
-        feeHandler = await FeeHandler.new(kyberDao.address, networkProxy.address, network.address, KNC.address, burnBlockInterval, kyberDao.address);
+        NMB = await TestToken.new("nimble network crystal", "NMB", 18);
+        feeHandler = await FeeHandler.new(nimbleDao.address, networkProxy.address, network.address, NMB.address, burnBlockInterval, nimbleDao.address);
 
         // init and setup reserves
         let result = await nwHelper.setupReserves(network, tokens, 0, 5, 0, 0, accounts, admin, operator);
@@ -137,7 +137,7 @@ contract('NimbleNetworkProxy', function(accounts) {
         await network.setContracts(feeHandler.address, matchingEngine.address, zeroAddress, {from: admin});
         await network.addNimbleProxy(networkProxy.address, {from: admin});
         await network.addOperator(operator, {from: admin});
-        await network.setNimbleDaoContract(kyberDao.address, {from: admin});
+        await network.setNimbleDaoContract(nimbleDao.address, {from: admin});
 
         //add and list pair for reserve
         await nwHelper.addReservesToStorage(storage, reserveInstances, tokens, operator);
@@ -526,7 +526,7 @@ contract('NimbleNetworkProxy', function(accounts) {
             }
 
             //init feeHandler
-            tempFeeHandler = await FeeHandler.new(mockNimbleDao.address, mockProxy.address, mockNetwork.address, KNC.address, burnBlockInterval, mockNimbleDao.address);
+            tempFeeHandler = await FeeHandler.new(mockNimbleDao.address, mockProxy.address, mockNetwork.address, NMB.address, burnBlockInterval, mockNimbleDao.address);
 
             // init and setup reserves
             let result = await nwHelper.setupReserves(mockNetwork, mockTokens, 5, 0, 0, 0, accounts, admin, operator);
@@ -659,9 +659,9 @@ contract('NimbleNetworkProxy', function(accounts) {
         });
 
         it("test reading public values", async () => {
-            let networkAddr = await networkProxy.kyberNetwork();
+            let networkAddr = await networkProxy.nimbleNetwork();
             assert(networkAddr == network.address, "missmatch network address");
-            let hintHandlerAddr = await networkProxy.kyberHintHandler();
+            let hintHandlerAddr = await networkProxy.nimbleHintHandler();
             assert(hintHandlerAddr == matchingEngine.address, "missmatch hint handler address");
         });
     });
@@ -671,7 +671,7 @@ contract('NimbleNetworkProxy', function(accounts) {
             let newHintHandler = await MatchingEngine.new(admin);
             let txResult = await networkProxy.setHintHandler(newHintHandler.address, { from: admin });
             await expectEvent(txResult, "NimbleHintHandlerSet", {
-                kyberHintHandler: newHintHandler.address
+                nimbleHintHandler: newHintHandler.address
             });
             await networkProxy.setHintHandler(matchingEngine.address, { from: admin });
         });
@@ -718,11 +718,11 @@ contract('NimbleNetworkProxy', function(accounts) {
 
     describe("test reverting when using contract zero address", async () => {
         it("test set network to zero address", async () => {
-            await expectRevert(networkProxy.setNimbleNetwork(zeroAddress, { from: admin }), "kyberNetwork 0");
+            await expectRevert(networkProxy.setNimbleNetwork(zeroAddress, { from: admin }), "nimbleNetwork 0");
         });
 
         it("test set hint handler to zero address", async () => {
-            await expectRevert(networkProxy.setHintHandler(zeroAddress, { from: admin }), "kyberHintHandler 0");
+            await expectRevert(networkProxy.setHintHandler(zeroAddress, { from: admin }), "nimbleHintHandler 0");
         });
     });
 
@@ -803,15 +803,15 @@ contract('NimbleNetworkProxy', function(accounts) {
         let maliciousNetwork;
         before("init 'generous' network and 'malicious' network", async () => {
             // set up generousNetwork
-            [generousNetwork, tempStorage] = await nwHelper.setupNetwork(GenerousNetwork, networkProxy.address, KNC.address, kyberDao.address, admin, operator);
+            [generousNetwork, tempStorage] = await nwHelper.setupNetwork(GenerousNetwork, networkProxy.address, NMB.address, nimbleDao.address, admin, operator);
             let result = await nwHelper.setupReserves(generousNetwork, tokens, 1, 1, 0, 0, accounts, admin, operator);
             await nwHelper.addReservesToStorage(tempStorage, result.reserveInstances, tokens, operator);
             // set up maliciousNetwork
-            [maliciousNetwork, tempStorage] = await nwHelper.setupNetwork(MaliciousNetwork, networkProxy.address, KNC.address, kyberDao.address, admin, operator);
+            [maliciousNetwork, tempStorage] = await nwHelper.setupNetwork(MaliciousNetwork, networkProxy.address, NMB.address, nimbleDao.address, admin, operator);
             result = await nwHelper.setupReserves(maliciousNetwork, tokens, 1, 1, 0, 0, accounts, admin, operator);
             await nwHelper.addReservesToStorage(tempStorage, result.reserveInstances, tokens, operator);
             // set up generousNetwork2
-            [generousNetwork2, tempStorage] = await nwHelper.setupNetwork(GenerousNetwork2, networkProxy.address, KNC.address, kyberDao.address, admin, operator);
+            [generousNetwork2, tempStorage] = await nwHelper.setupNetwork(GenerousNetwork2, networkProxy.address, NMB.address, nimbleDao.address, admin, operator);
             result = await nwHelper.setupReserves(generousNetwork2, tokens, 1, 1, 0, 0, accounts, admin, operator);
             await nwHelper.addReservesToStorage(tempStorage, result.reserveInstances, tokens, operator);
         });
@@ -906,7 +906,7 @@ contract('NimbleNetworkProxy', function(accounts) {
                     rate.expectedRate,
                     zeroAddress,
                     { from: taker }
-                ), "kyberNetwork returned wrong amount"
+                ), "nimbleNetwork returned wrong amount"
             );
             // change the amount and see trade success
             await networkProxy.trade(

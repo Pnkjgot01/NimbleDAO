@@ -9,9 +9,9 @@ import "../NimbleNetwork.sol";
 contract MaliciousNimbleNetwork is NimbleNetwork {
     uint256 public myFeeWei = 10;
 
-    constructor(address _admin, INimbleStorage _kyberStorage)
+    constructor(address _admin, INimbleStorage _nimbleStorage)
         public
-        NimbleNetwork(_admin, _kyberStorage)
+        NimbleNetwork(_admin, _nimbleStorage)
     {}
 
     function setMyFeeWei(uint256 fee) public {
@@ -19,7 +19,7 @@ contract MaliciousNimbleNetwork is NimbleNetwork {
     }
 
     /// @notice Use token address ETH_TOKEN_ADDRESS for ether
-    /// @dev Trade API for kyberNetwork
+    /// @dev Trade API for nimbleNetwork
     /// @param tradeData Main trade data object for trade info to be stored
     function trade(TradeData memory tradeData, bytes memory hint)
         internal
@@ -157,5 +157,5 @@ contract MaliciousNimbleNetwork is NimbleNetwork {
     }
 
     // overwrite function to reduce bytecode size
-    function removeNimbleProxy(address kyberProxy) external virtual override {}
+    function removeNimbleProxy(address nimbleProxy) external virtual override {}
 }

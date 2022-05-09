@@ -5,11 +5,11 @@ import "../NimbleStaking.sol";
 
 contract MockNimbleStakingMalicious is NimbleStaking {
     constructor(
-        IERC20 _kncToken,
+        IERC20 _nmbToken,
         uint256 _epochPeriod,
         uint256 _startBlock,
         INimbleDao _admin
-    ) public NimbleStaking(_kncToken, _epochPeriod, _startBlock, _admin) {}
+    ) public NimbleStaking(_nmbToken, _epochPeriod, _startBlock, _admin) {}
 
     function setLatestStake(address staker, uint256 amount) public {
         stakerLatestData[staker].stake = amount;

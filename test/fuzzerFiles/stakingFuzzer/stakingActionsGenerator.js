@@ -34,10 +34,10 @@ module.exports.genNextOp = function genNextOp(loop, numRuns) {
     return NO_ACTION;
 }
 
-// Option 1: amount smaller than staker's KNC balance
+// Option 1: amount smaller than staker's NMB balance
 // Option 2: zero deposit
-// Option 3: amount larger than staker's KNC balance
-module.exports.genDeposit = async function genDeposit(kncToken, stakers) {
+// Option 3: amount larger than staker's NMB balance
+module.exports.genDeposit = async function genDeposit(nmbToken, stakers) {
     let result = {
         'staker': '',
         'amount': 0,
@@ -48,7 +48,7 @@ module.exports.genDeposit = async function genDeposit(kncToken, stakers) {
 
     let rand = genRandomSeed(stakers.length);
     result.staker = stakers[rand];
-    let tokenBal = (await kncToken.balanceOf(result.staker));
+    let tokenBal = (await nmbToken.balanceOf(result.staker));
     rand = genRandomSeed(BASE);
     if (rand <= 96) {
         result.amount = genRandomBN(new BN(1), tokenBal);

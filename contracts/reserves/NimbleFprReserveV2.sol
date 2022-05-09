@@ -27,7 +27,7 @@ contract NimbleFprReserveV2 is INimbleReserve, Utils5, Withdrawable3 {
         uint128 maxGasPriceWei;
     }
 
-    address public kyberNetwork;
+    address public nimbleNetwork;
     ConfigData internal configData;
 
     IConversionRates public conversionRatesContract;
@@ -55,17 +55,17 @@ contract NimbleFprReserveV2 is INimbleReserve, Utils5, Withdrawable3 {
     event SetSanityRateAddress(INimbleSanity indexed sanity);
 
     constructor(
-        address _kyberNetwork,
+        address _nimbleNetwork,
         IConversionRates _ratesContract,
         IWeth _weth,
         uint128 _maxGasPriceWei,
         bool _doRateValidation,
         address _admin
     ) public Withdrawable3(_admin) {
-        require(_kyberNetwork != address(0), "kyberNetwork 0");
+        require(_nimbleNetwork != address(0), "nimbleNetwork 0");
         require(_ratesContract != IConversionRates(0), "ratesContract 0");
         require(_weth != IWeth(0), "weth 0");
-        kyberNetwork = _kyberNetwork;
+        nimbleNetwork = _nimbleNetwork;
         conversionRatesContract = _ratesContract;
         weth = _weth;
         configData = ConfigData({
@@ -87,7 +87,7 @@ contract NimbleFprReserveV2 is INimbleReserve, Utils5, Withdrawable3 {
         uint256 conversionRate,
         bool /* validate */
     ) external override payable returns (bool) {
-        require(msg.sender == kyberNetwork, "wrong sender");
+        require(msg.sender == nimbleNetwork, "wrong sender");
         ConfigData memory data = configData;
         require(data.tradeEnabled, "trade not enable");
         require(tx.gasprice <= uint256(data.maxGasPriceWei), "gas price too high");
@@ -174,8 +174,8 @@ contract NimbleFprReserveV2 is INimbleReserve, Utils5, Withdrawable3 {
     }
 
     function setNimbleNetwork(address _newNetwork) external onlyAdmin {
-        require(_newNetwork != address(0), "kyberNetwork 0");
-        kyberNetwork = _newNetwork;
+        require(_newNetwork != address(0), "nimbleNetwork 0");
+        nimbleNetwork = _newNetwork;
         emit SetNimbleNetworkAddress(_newNetwork);
     }
 

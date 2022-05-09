@@ -5,7 +5,7 @@ const { expectRevert } = require('@openzeppelin/test-helpers');
 
 const MockNimbleDao = artifacts.require("MockNimbleDao.sol");
 const FeeHandler = artifacts.require("NimbleFeeHandler.sol");
-const BurnKncSanityRate = artifacts.require("MockChainLinkSanityRate.sol");
+const BurnnmbSanityRate = artifacts.require("MockChainLinkSanityRate.sol");
 const FeeTokenHandler = artifacts.require("NimbleTokenFeeHandler.sol");
 const FeeWrapper = artifacts.require("NimbleFeeHandlerWrapper.sol");
 const Token = artifacts.require("Token.sol");
@@ -15,7 +15,7 @@ const {BPS, precisionUnits, ethDecimals, ethAddress, zeroAddress, zeroBN, MAX_RA
 const blockTime = 16; // each block is mined after 16s
 const DAI_DECIMALS = 18;
 const EURS_DECIMALS = 2;
-const KNC_DECIMALS = 18;
+const NMB_DECIMALS = 18;
 const USDC_DECIMALS = 6;
 const BURN_BLOCK_INTERVAL = 3;
 
@@ -26,7 +26,7 @@ let daoOperator;
 let mockNimbleDao;
 let dai;
 let eurs;
-let knc;
+let nmb;
 let usdc;
 let ethFeeHandler;
 let daiFeeHandler;
@@ -44,7 +44,7 @@ let rebateBpsPerWallet = [];
 let platformWallet;
 let tokens = [];
 let tokenAddresses = [];
-let oneKnc = new BN(10).pow(new BN(KNC_DECIMALS));
+let onenmb = new BN(10).pow(new BN(NMB_DECIMALS));
 let oneEth = new BN(10).pow(new BN(ethDecimals));
 let oneDai = new BN(10).pow(new BN(DAI_DECIMALS));
 let oneEurs = new BN(10).pow(new BN(EURS_DECIMALS));
@@ -55,8 +55,8 @@ let daiWeiToBurn = oneDai.mul(new BN(500)); // 500 dai
 let eursWeiToBurn = oneEurs.mul(new BN(400)); // 400 eurs
 let usdcWeiToBurn = oneUsdc.mul(new BN(500)); // 500 usdc
 
-let ethToKncPrecision = precisionUnits.div(new BN(200)); // 1 eth --> 200 knc
-let kncToEthPrecision = precisionUnits.mul(new BN(200));
+let ethTonmbPrecision = precisionUnits.div(new BN(200)); // 1 eth --> 200 nmb
+let nmbToEthPrecision = precisionUnits.mul(new BN(200));
 
 contract('NimbleFeeHandlerWrapper', function(accounts) {
     before("Setting global variables", async() => {
@@ -84,36 +84,36 @@ contract('NimbleFeeHandlerWrapper', function(accounts) {
         await mockNimbleDao.setStakerPercentageInPrecision(stakerPercentageInPrecision);
 
         proxy = await Proxy.new();
-        kyberNetwork = accounts[7];
+        nimbleNetwork = accounts[7];
 
         // deploy tokens
         dai = await Token.new("DAI", "DAI", DAI_DECIMALS);
         eurs = await Token.new("STASIS EURS", "EURS", EURS_DECIMALS);
-        knc = await Token.new("NimbleNetworkCrystal", "KNC", KNC_DECIMALS);
+        nmb = await Token.new("NimbleNetworkCrystal", "NMB", NMB_DECIMALS);
         usdc = await Token.new("USD Coin", "USDC", USDC_DECIMALS);
 
         tokens = [{'address': ethAddress}, dai, eurs, usdc];
         tokenAddresses = [ethAddress, dai.address, eurs.address, usdc.address];
 
-        await knc.transfer(proxy.address, oneKnc.mul(new BN(100000)));
+        await nmb.transfer(proxy.address, onenmb.mul(new BN(100000)));
         await Helper.sendEtherWithPromise(accounts[9], proxy.address, oneEth.mul(new BN(100)));
 
-        // for burning KNC
-        await proxy.setPairRate(ethAddress, knc.address, ethToKncPrecision);
-        await proxy.setPairRate(knc.address, ethAddress, kncToEthPrecision);
+        // for burning NMB
+        await proxy.setPairRate(ethAddress, nmb.address, ethTonmbPrecision);
+        await proxy.setPairRate(nmb.address, ethAddress, nmbToEthPrecision);
 
         // setup sanity rate for ethFeeHandler
-        sanityRate = await BurnKncSanityRate.new();
-        await sanityRate.setLatestKncToEthRate(kncToEthPrecision);
+        sanityRate = await BurnnmbSanityRate.new();
+        await sanityRate.setLatestnmbToEthRate(nmbToEthPrecision);
     });
 
     beforeEach("setup feeHandlers and wrapper", async() => {
         // setup feeHandlers
-        ethFeeHandler = await FeeHandler.new(daoSetter, proxy.address, kyberNetwork, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+        ethFeeHandler = await FeeHandler.new(daoSetter, proxy.address, nimbleNetwork, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
         await ethFeeHandler.setDaoContract(mockNimbleDao.address, {from: daoSetter});
-        daiFeeHandler = await FeeTokenHandler.new(mockNimbleDao.address, proxy.address, kyberNetwork, dai.address, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
-        eursFeeHandler = await FeeTokenHandler.new(mockNimbleDao.address, proxy.address, kyberNetwork, eurs.address, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
-        usdcFeeHandler = await FeeTokenHandler.new(mockNimbleDao.address, proxy.address, kyberNetwork, usdc.address, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+        daiFeeHandler = await FeeTokenHandler.new(mockNimbleDao.address, proxy.address, nimbleNetwork, dai.address, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
+        eursFeeHandler = await FeeTokenHandler.new(mockNimbleDao.address, proxy.address, nimbleNetwork, eurs.address, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
+        usdcFeeHandler = await FeeTokenHandler.new(mockNimbleDao.address, proxy.address, nimbleNetwork, usdc.address, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
         bindTokenToFeeHandler(ethFeeHandler, {'address': ethAddress}, ethWeiToBurn, oneEth);
         bindTokenToFeeHandler(daiFeeHandler, dai, daiWeiToBurn, oneDai);
         bindTokenToFeeHandler(eursFeeHandler, eurs, eursWeiToBurn, oneEurs);
@@ -130,13 +130,13 @@ contract('NimbleFeeHandlerWrapper', function(accounts) {
             if (token.address == ethAddress) {
                 await feeHandler.setBurnConfigParams(sanityRate.address, feeHandler.weiToBurn, {from: daoOperator});
             } else {
-                // give token to kyberNetwork
-                await token.transfer(kyberNetwork, feeHandler.oneToken.mul(new BN(100000)));
+                // give token to nimbleNetwork
+                await token.transfer(nimbleNetwork, feeHandler.oneToken.mul(new BN(100000)));
                 await feeHandler.setBurnConfigParams(zeroAddress, feeHandler.weiToBurn, {from: daoOperator});
             }
 
             await feeWrapper.addFeeHandler(token.address, feeHandler.address, {from: daoOperator});
-            let actualFeeHandlerArray = (await feeWrapper.getNimbleFeeHandlersPerToken(token.address)).kyberFeeHandlers;
+            let actualFeeHandlerArray = (await feeWrapper.getNimbleFeeHandlersPerToken(token.address)).nimbleFeeHandlers;
             Helper.assertEqualArray(actualFeeHandlerArray, [feeHandler.address], "feeHandler not added");
             await feeHandler.getBRR();
         }
@@ -406,17 +406,17 @@ contract('NimbleFeeHandlerWrapper', function(accounts) {
 
         before("setup tempFeeHandlers, get token index in feeWrapper", async() => {
             tokenIndex = (await feeWrapper.getSupportedTokens()).indexOf(usdc.address);
-            tempUsdcFeeHandler1 = await FeeTokenHandler.new(mockNimbleDao.address, proxy.address, kyberNetwork, usdc.address, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            tempUsdcFeeHandler1 = await FeeTokenHandler.new(mockNimbleDao.address, proxy.address, nimbleNetwork, usdc.address, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
             bindTokenToFeeHandler(tempUsdcFeeHandler1, usdc, usdcWeiToBurn, oneUsdc);
-            tempUsdcFeeHandler2 = await FeeTokenHandler.new(mockNimbleDao.address, proxy.address, kyberNetwork, usdc.address, knc.address, BURN_BLOCK_INTERVAL, daoOperator);
+            tempUsdcFeeHandler2 = await FeeTokenHandler.new(mockNimbleDao.address, proxy.address, nimbleNetwork, usdc.address, nmb.address, BURN_BLOCK_INTERVAL, daoOperator);
             bindTokenToFeeHandler(tempUsdcFeeHandler2, usdc, usdcWeiToBurn, oneUsdc);
             for (const feeHandler of [tempUsdcFeeHandler1, tempUsdcFeeHandler2]) {
                 let token = feeHandler.token;
                 if (token.address == ethAddress) {
                     await feeHandler.setBurnConfigParams(sanityRate.address, feeHandler.weiToBurn, {from: daoOperator});
                 } else {
-                    // give token to kyberNetwork
-                    await token.transfer(kyberNetwork, feeHandler.oneToken.mul(new BN(100000)));
+                    // give token to nimbleNetwork
+                    await token.transfer(nimbleNetwork, feeHandler.oneToken.mul(new BN(100000)));
                     await feeHandler.setBurnConfigParams(zeroAddress, feeHandler.weiToBurn, {from: daoOperator});
                 }
                 await feeHandler.getBRR();
@@ -439,7 +439,7 @@ contract('NimbleFeeHandlerWrapper', function(accounts) {
             currentEpoch = (await mockNimbleDao.epoch()).toNumber();
 
             let result = await feeWrapper.getNimbleFeeHandlersPerToken(usdc.address);
-            Helper.assertEqualArray(result.kyberFeeHandlers, tempFeeHandlerAddresses, "feeHandlers not the same");
+            Helper.assertEqualArray(result.nimbleFeeHandlers, tempFeeHandlerAddresses, "feeHandlers not the same");
             Helper.assertEqual(new BN(tempUsdcFeeHandler1StartEpoch), result.epochs[1]);
             Helper.assertEqual(new BN(tempUsdcFeeHandler2StartEpoch), result.epochs[2]);
         });
@@ -631,11 +631,11 @@ async function sendFeesToFeeHandler(feeHandler, platformFeeWei, networkFeeWei) {
     let token = feeHandler.token;
     if (token.address == ethAddress) {
         sendVal = platformFeeWei.add(networkFeeWei);
-        await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet, platformWallet, platformFeeWei, networkFeeWei, {from: kyberNetwork, value: sendVal});
+        await feeHandler.handleFees(ethAddress, rebateWallets, rebateBpsPerWallet, platformWallet, platformFeeWei, networkFeeWei, {from: nimbleNetwork, value: sendVal});
     } else {
         sendVal = platformFeeWei.add(networkFeeWei);
-        await token.approve(feeHandler.address, sendVal, {from: kyberNetwork});
-        await feeHandler.handleFees(token.address, rebateWallets, rebateBpsPerWallet, platformWallet, platformFeeWei, networkFeeWei, {from: kyberNetwork});
+        await token.approve(feeHandler.address, sendVal, {from: nimbleNetwork});
+        await feeHandler.handleFees(token.address, rebateWallets, rebateBpsPerWallet, platformWallet, platformFeeWei, networkFeeWei, {from: nimbleNetwork});
     }
 }
 

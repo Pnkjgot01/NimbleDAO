@@ -40,7 +40,7 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
         bool campaignExists;
         uint256 startTimestamp;
         uint256 endTimestamp;
-        uint256 totalKNCSupply; // total KNC supply at the time campaign was created
+        uint256 totalNMBSupply; // total NMB supply at the time campaign was created
         FormulaData formulaData; // formula params for concluding campaign result
         bytes link; // link to KIP, explaination of options, etc.
         uint256[] options; // data of options
@@ -53,7 +53,7 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
     }
 
     uint256 public minCampaignDurationInSeconds = 4 days;
-    IERC20 public immutable kncToken;
+    IERC20 public immutable nmbToken;
     INimbleStaking public immutable staking;
 
     // use to generate increasing campaign ID
@@ -94,7 +94,7 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
     constructor(
         uint256 _epochPeriod,
         uint256 _startTimestamp,
-        IERC20 _knc,
+        IERC20 _nmb,
         uint256 _defaultNetworkFeeBps,
         uint256 _defaultRewardBps,
         uint256 _defaultRebateBps,
@@ -102,7 +102,7 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
     ) public DaoOperator(_daoOperator) {
         require(_epochPeriod > 0, "ctor: epoch period is 0");
         require(_startTimestamp >= now, "ctor: start in the past");
-        require(_knc != IERC20(0), "ctor: knc token 0");
+        require(_nmb != IERC20(0), "ctor: nmb token 0");
         // in Network, maximum fee that can be taken from 1 tx is (platform fee + 2 * network fee)
         // so network fee should be less than 50%
         require(_defaultNetworkFeeBps < BPS / 2, "ctor: network fee high");
@@ -110,7 +110,7 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
 
         epochPeriodInSeconds = _epochPeriod;
         firstEpochStartTimestamp = _startTimestamp;
-        kncToken = _knc;
+        nmbToken = _nmb;
 
         latestNetworkFeeResult = _defaultNetworkFeeBps;
         latestBrrData = BRRData({
@@ -120,7 +120,7 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
 
         // deploy staking contract 
         staking = new NimbleStaking({
-            _kncToken: _knc,
+            _nmbToken: _nmb,
             _epochPeriod: _epochPeriod,
             _startTimestamp: _startTimestamp,
             _kyberDao: INimbleDao(this)
@@ -238,7 +238,7 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
             campaignType: campaignType,
             startTimestamp: startTimestamp,
             endTimestamp: endTimestamp,
-            totalKNCSupply: kncToken.totalSupply(),
+            totalNMBSupply: nmbToken.totalSupply(),
             link: link,
             formulaData: formulaData,
             options: options,
@@ -399,7 +399,7 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
             CampaignType campaignType,
             uint256 startTimestamp,
             uint256 endTimestamp,
-            uint256 totalKNCSupply,
+            uint256 totalNMBSupply,
             uint256 minPercentageInPrecision,
             uint256 cInPrecision,
             uint256 tInPrecision,
@@ -411,7 +411,7 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
         campaignType = campaign.campaignType;
         startTimestamp = campaign.startTimestamp;
         endTimestamp = campaign.endTimestamp;
-        totalKNCSupply = campaign.totalKNCSupply;
+        totalNMBSupply = campaign.totalNMBSupply;
         minPercentageInPrecision = campaign.formulaData.minPercentageInPrecision;
         cInPrecision = campaign.formulaData.cInPrecision;
         tInPrecision = campaign.formulaData.tInPrecision;
@@ -484,8 +484,8 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
             return (0, 0);
         }
 
-        uint256 totalSupply = campaign.totalKNCSupply;
-        // something is wrong here, total KNC supply shouldn't be 0
+        uint256 totalSupply = campaign.totalNMBSupply;
+        // something is wrong here, total NMB supply shouldn't be 0
         if (totalSupply == 0) {
             return (0, 0);
         }
@@ -513,7 +513,7 @@ contract NimbleDao is INimbleDao, EpochUtils, ReentrancyGuard, Utils5, DaoOperat
         FormulaData memory formulaData = campaign.formulaData;
 
         // compute voted percentage (in precision)
-        uint256 votedPercentage = totalVotes.mul(PRECISION).div(campaign.totalKNCSupply);
+        uint256 votedPercentage = totalVotes.mul(PRECISION).div(campaign.totalNMBSupply);
 
         // total voted percentage is below min acceptable percentage, no winning option
         if (formulaData.minPercentageInPrecision > votedPercentage) {

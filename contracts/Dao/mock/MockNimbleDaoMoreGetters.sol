@@ -7,7 +7,7 @@ contract MockNimbleDaoMoreGetters is NimbleDao {
     constructor(
         uint256 _epochPeriod,
         uint256 _startTimestamp,
-        IERC20 _knc,
+        IERC20 _nmb,
         uint256 _minCampDuration,
         uint256 _defaultNetworkFeeBps,
         uint256 _defaultRewardBps,
@@ -18,7 +18,7 @@ contract MockNimbleDaoMoreGetters is NimbleDao {
         NimbleDao(
             _epochPeriod,
             _startTimestamp,
-            _knc,
+            _nmb,
             _defaultNetworkFeeBps,
             _defaultRewardBps,
             _defaultRebateBps,

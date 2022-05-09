@@ -4,12 +4,12 @@ import "../INimbleMatchingEngine.sol";
 import "../utils/Utils5.sol";
 
 contract MaliciousMatchingEngine is Utils5 {
-    INimbleStorage public kyberStorage;
+    INimbleStorage public nimbleStorage;
     uint256 splitLength;
     bool badValues;
 
-    function setNimbleStorage(INimbleStorage _kyberStorage) external {
-        kyberStorage = _kyberStorage;
+    function setNimbleStorage(INimbleStorage _nimbleStorage) external {
+        nimbleStorage = _nimbleStorage;
     }
 
     function setSplitLength(uint length) external {
@@ -37,8 +37,8 @@ contract MaliciousMatchingEngine is Utils5 {
         isTokenToToken;
         hint;
         reserveIds = (dest == ETH_TOKEN_ADDRESS)
-            ? kyberStorage.getReserveIdsPerTokenSrc(src)
-            : kyberStorage.getReserveIdsPerTokenDest(dest);
+            ? nimbleStorage.getReserveIdsPerTokenSrc(src)
+            : nimbleStorage.getReserveIdsPerTokenDest(dest);
 
         splitValuesBps = populateSplitValuesBps();
         processWithRate = INimbleMatchingEngine.ProcessWithRate.Required;

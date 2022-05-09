@@ -7,7 +7,7 @@ import "../NimbleStaking.sol";
 /// @notice Mock Malicious NimbleDao tries to re-enter withdraw function in Staking
 contract MockMaliciousNimbleDaoReentrancy is EpochUtils {
     NimbleStaking public staking;
-    IERC20 public knc;
+    IERC20 public nmb;
 
     uint256 totalDeposit = 0;
 
@@ -15,13 +15,13 @@ contract MockMaliciousNimbleDaoReentrancy is EpochUtils {
         uint256 _epochPeriod,
         uint256 _startTimestamp,
         NimbleStaking _staking,
-        IERC20 _knc
+        IERC20 _nmb
     ) public {
         epochPeriodInSeconds = _epochPeriod;
         firstEpochStartTimestamp = _startTimestamp;
         staking = _staking;
-        knc = _knc;
-        require(_knc.approve(address(_staking), 2**255));
+        nmb = _nmb;
+        require(_nmb.approve(address(_staking), 2**255));
     }
 
     function deposit(uint256 amount) public {

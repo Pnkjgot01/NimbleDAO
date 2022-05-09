@@ -31,7 +31,7 @@ let networkProxy;
 let networkProxyV1;
 let networkStorage;
 let network;
-let kyberDao;
+let nimbleDao;
 let feeHandler;
 let matchingEngine;
 let operator;
@@ -45,7 +45,7 @@ let epoch = new BN(3);
 let expiryTimestamp;
 
 //fee hanlder related
-let KNC;
+let NMB;
 let burnBlockInterval = new BN(30);
 
 //reserve data
@@ -75,8 +75,8 @@ contract('Parallel Proxy V1 + V2', function(accounts) {
 
         //NimbleDao related init.
         expiryTimestamp = new BN(await Helper.getCurrentBlockTime() + 1000000);
-        kyberDao = await MockDao.new(rewardInBPS, rebateInBPS, epoch, expiryTimestamp);
-        await kyberDao.setNetworkFeeBps(networkFeeBps);
+        nimbleDao = await MockDao.new(rewardInBPS, rebateInBPS, epoch, expiryTimestamp);
+        await nimbleDao.setNetworkFeeBps(networkFeeBps);
 
         // init storage
         networkStorage = await nwHelper.setupStorage(admin);
@@ -101,7 +101,7 @@ contract('Parallel Proxy V1 + V2', function(accounts) {
         await networkStorage.setEntitledRebatePerReserveType(true, false, true, false, true, true, {from: admin});
 
         rateHelper = await RateHelper.new(admin);
-        await rateHelper.setContracts(kyberDao.address, networkStorage.address, {from: admin});
+        await rateHelper.setContracts(nimbleDao.address, networkStorage.address, {from: admin});
 
         // setup proxy
         await networkProxy.setNimbleNetwork(network.address, {from: admin});
@@ -118,8 +118,8 @@ contract('Parallel Proxy V1 + V2', function(accounts) {
         }
 
         //init feeHandler
-        KNC = await TestToken.new("kyber network crystal", "KNC", 18);
-        feeHandler = await FeeHandler.new(daoSetter, networkProxy.address, network.address, KNC.address, burnBlockInterval, daoSetter);
+        NMB = await TestToken.new("nimble network crystal", "NMB", 18);
+        feeHandler = await FeeHandler.new(daoSetter, networkProxy.address, network.address, NMB.address, burnBlockInterval, daoSetter);
 
         // init and setup reserves
         let result = await nwHelper.setupReserves(network, tokens, 0, 5, 0, 0, accounts, admin, operator);
@@ -134,7 +134,7 @@ contract('Parallel Proxy V1 + V2', function(accounts) {
         await network.addNimbleProxy(networkProxyV1.address, {from: admin});
         await network.addOperator(operator, {from: admin});
         await network.setContracts(feeHandler.address, matchingEngine.address, zeroAddress, {from: admin});
-        await network.setNimbleDaoContract(kyberDao.address, {from: admin});
+        await network.setNimbleDaoContract(nimbleDao.address, {from: admin});
 
         //add and list pair for reserve
         await nwHelper.addReservesToStorage(networkStorage, reserveInstances, tokens, operator);

@@ -16,7 +16,7 @@ contract NimbleUniswapV2Reserve is INimbleReserve, Withdrawable3, Utils5 {
     uint256 public constant DEFAULT_FEE_BPS = 0;
     uint256 public constant DEADLINE = 2**255;
 
-    address public kyberNetwork;
+    address public nimbleNetwork;
     // fee deducted for each trade
     uint256 public feeBps = DEFAULT_FEE_BPS;
 
@@ -49,22 +49,22 @@ contract NimbleUniswapV2Reserve is INimbleReserve, Withdrawable3, Utils5 {
 
     event EtherReceival(address indexed sender, uint256 amount);
 
-    event NimbleNetworkSet(address kyberNetwork);
+    event NimbleNetworkSet(address nimbleNetwork);
 
     constructor(
         IUniswapV2Router01 _uniswapRouter,
         address _weth,
         address _admin,
-        address _kyberNetwork
+        address _nimbleNetwork
     ) public Withdrawable3(_admin) {
         require(address(_uniswapRouter) != address(0), "uniswapRouter 0");
         require(_weth != address(0), "weth 0");
-        require(_kyberNetwork != address(0), "kyberNetwork 0");
+        require(_nimbleNetwork != address(0), "nimbleNetwork 0");
 
         uniswapRouter = _uniswapRouter;
         uniswapFactory = IUniswapV2Factory(_uniswapRouter.factory());
         weth = _weth;
-        kyberNetwork = _kyberNetwork;
+        nimbleNetwork = _nimbleNetwork;
     }
 
     receive() external payable {
@@ -83,7 +83,7 @@ contract NimbleUniswapV2Reserve is INimbleReserve, Withdrawable3, Utils5 {
         bool /* validate */
     ) external override payable returns (bool) {
         require(tradeEnabled, "trade is disabled");
-        require(msg.sender == kyberNetwork, "only kyberNetwork");
+        require(msg.sender == nimbleNetwork, "only nimbleNetwork");
         require(isValidTokens(srcToken, destToken), "only use eth and listed token");
 
         require(conversionRate > 0, "conversionRate 0");
@@ -157,11 +157,11 @@ contract NimbleUniswapV2Reserve is INimbleReserve, Withdrawable3, Utils5 {
         }
     }
 
-    function setNimbleNetwork(address _kyberNetwork) external onlyAdmin {
-        require(_kyberNetwork != address(0));
-        if (kyberNetwork != _kyberNetwork) {
-            kyberNetwork = _kyberNetwork;
-            emit NimbleNetworkSet(kyberNetwork);
+    function setNimbleNetwork(address _nimbleNetwork) external onlyAdmin {
+        require(_nimbleNetwork != address(0));
+        if (nimbleNetwork != _nimbleNetwork) {
+            nimbleNetwork = _nimbleNetwork;
+            emit NimbleNetworkSet(nimbleNetwork);
         }
     }
 
@@ -240,7 +240,7 @@ contract NimbleUniswapV2Reserve is INimbleReserve, Withdrawable3, Utils5 {
     }
 
     /**
-     *   @dev called by kybernetwork to get settlement rate
+     *   @dev called by nimblenetwork to get settlement rate
      */
     function getConversionRate(
         IERC20 src,

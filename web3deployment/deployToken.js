@@ -123,11 +123,11 @@ async function main() {
 
     console.log("deploying test token");
 
-    let kncToken = {};
-    kncToken.symbol = "KNC";
-    kncToken.name = "NimbleNetwork";
-    kncToken.decimals = 18;
-    await deployToken(kncToken);
+    let nmbToken = {};
+    nmbToken.symbol = "NMB";
+    nmbToken.name = "NimbleNetwork";
+    nmbToken.decimals = 18;
+    await deployToken(nmbToken);
 
     let eosToken = {};
     eosToken.symbol = "EOS";

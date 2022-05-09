@@ -76,10 +76,10 @@ contract('NimbleUniswapv2Reserve', function (accounts) {
       );
     });
 
-    it('test revert if kyberNetwork 0', async () => {
+    it('test revert if nimbleNetwork 0', async () => {
       await expectRevert(
         NimbleUniswapV2Reserve.new(uniswapFactory.address, weth.address, admin, zeroAddress),
-        'kyberNetwork 0'
+        'nimbleNetwork 0'
       );
     });
 
@@ -103,7 +103,7 @@ contract('NimbleUniswapv2Reserve', function (accounts) {
         'unexpected uniswapFactory'
       );
       assert(weth.address == (await reserve.weth()), 'unexpected weth');
-      assert(network == (await reserve.kyberNetwork()), 'unexpected kyberNetwork');
+      assert(network == (await reserve.nimbleNetwork()), 'unexpected nimbleNetwork');
     });
   });
 
@@ -197,9 +197,9 @@ contract('NimbleUniswapv2Reserve', function (accounts) {
       let newNetwork = accounts[6];
       let txResult = await reserve.setNimbleNetwork(newNetwork, {from: admin});
       expectEvent(txResult, 'NimbleNetworkSet', {
-        kyberNetwork: newNetwork
+        nimbleNetwork: newNetwork
       });
-      assert(newNetwork == await reserve.kyberNetwork(), "network contract missmatch")
+      assert(newNetwork == await reserve.nimbleNetwork(), "network contract missmatch")
       //reset network value
       reserve.setNimbleNetwork(network, {from: admin})
     });
@@ -612,7 +612,7 @@ contract('NimbleUniswapv2Reserve', function (accounts) {
           value: srcAmount,
           from: admin
         }),
-        'only kyberNetwork'
+        'only nimbleNetwork'
       );
     });
 

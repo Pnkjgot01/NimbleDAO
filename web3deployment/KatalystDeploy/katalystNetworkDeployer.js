@@ -123,7 +123,7 @@ async function deployContract(artifacts, contractName, ctorArgs) {
 
 //token addresses
 let allTokens;
-let kncTokenAddress;
+let nmbTokenAddress;
 
 //contracts
 let feeHandlerContract;
@@ -208,7 +208,7 @@ function parseInput(jsonInput) {
     rewardFeeBps = jsonInput["reward fee bps"].toString();;
     rebateFeeBps = jsonInput["rebate bps"].toString();;
 
-    kncTokenAddress = jsonInput["addresses"].knc;
+    nmbTokenAddress = jsonInput["addresses"].nmb;
     gasHelperAddress = jsonInput["addresses"].gasHelper;
 
     // output file name
@@ -429,7 +429,7 @@ async function deployStorageContracts(output) {
     );
   }
 
-  // kyberDao history
+  // nimbleDao history
   if (daoHistoryAddress == "") {
     console.log("deploy daoHistory");
     [daoHistoryAddress, daoHistoryContract] = await deployContract(output, "NimbleHistory", [sender]);
@@ -472,7 +472,7 @@ async function deployStorageContracts(output) {
 
 async function deployNetworkContract(output) {
   if (networkAddress == "") {
-    console.log("deploying kyber network");
+    console.log("deploying nimble network");
     [networkAddress, networkContract] = await deployContract(output, "NimbleNetwork", [sender, storageAddress]);
     console.log(`network: ${networkAddress}`);
     await pressToContinue();
@@ -503,7 +503,7 @@ async function deployFeeHandlerContract(output) {
     console.log("deploying feeHandler");
     [feeHandlerAddress, feeHandlerContract] = await deployContract(
       output, "NimbleFeeHandler", 
-      [sender, proxyAddress, networkAddress, kncTokenAddress, burnBlockInterval, daoOperator]
+      [sender, proxyAddress, networkAddress, nmbTokenAddress, burnBlockInterval, daoOperator]
     );
     console.log(`Fee Handler: ${feeHandlerAddress}`);
     await pressToContinue();
@@ -521,7 +521,7 @@ async function deployDaoContract(output) {
         [daoAddress, daoContract] = await deployContract(
             output, "NimbleDao",
             [
-              epochPeriod, startTimestamp, kncTokenAddress,
+              epochPeriod, startTimestamp, nmbTokenAddress,
               networkFeeBps, rewardFeeBps, rebateFeeBps, daoOperator
             ]
         );
@@ -544,8 +544,8 @@ async function getStakingAddress() {
 
 async function waitForMatchingEngineAndStorageUpdate() {
   while(true) {
-    let matchingEngineNetwork = await matchingEngineContract.methods.kyberNetwork().call();
-    let storageNetwork = await storageContract.methods.kyberNetwork().call();
+    let matchingEngineNetwork = await matchingEngineContract.methods.nimbleNetwork().call();
+    let storageNetwork = await storageContract.methods.nimbleNetwork().call();
     if (matchingEngineNetwork == networkAddress && storageNetwork == networkAddress) {
       return;
     } else if (matchingEngineNetwork != networkAddress) {
@@ -565,7 +565,7 @@ async function waitForMatchingEngineAndStorageUpdate() {
 async function checkZeroProxies() {
     let networkProxies = await storageContract.methods.getNimbleProxies().call();
     if (networkProxies.length > 0) {
-      console.log("\x1b[41m%s\x1b[0m" ,"Existing kyberProxies in storage, remove before proceeding");
+      console.log("\x1b[41m%s\x1b[0m" ,"Existing nimbleProxies in storage, remove before proceeding");
       process.exit(1);
     }
     return;

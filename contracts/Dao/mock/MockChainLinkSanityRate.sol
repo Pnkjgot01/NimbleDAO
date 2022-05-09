@@ -7,7 +7,7 @@ contract MockChainLinkSanityRate is ISanityRate {
     uint256 latestAnswerValue;
 
     function setLatestNmbToEthRate(uint256 _nmbEthRate) external {
-        latestAnswerValue = _kncEthRate;
+        latestAnswerValue = _nmbEthRate;
     }
 
     function latestAnswer() external view override returns (uint256) {

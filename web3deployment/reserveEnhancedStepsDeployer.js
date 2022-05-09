@@ -201,7 +201,7 @@ async function main() {
     [conversionRatesAddress,conversionRatesContract] = await deployContract(output, "EnhancedStepFunctions.sol:EnhancedStepFunctions", [sender]);
     console.log("enhanced steps fpr pricing contract", conversionRatesAddress);
 
-    console.log("deploying kyber reserve");
+    console.log("deploying nimble reserve");
     [reserveAddress,reserveContract] = await deployContract(output, "NimbleReserve.sol:NimbleReserve", [networkAddress,conversionRatesAddress,sender]);
 
     console.log("reserve", reserveAddress);

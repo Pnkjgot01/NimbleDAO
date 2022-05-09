@@ -1875,7 +1875,7 @@ contract('NimbleFprReserveV2', function(accounts) {
     it("Test revert network 0", async() => {
       await expectRevert(
         Reserve.new(zeroAddress, convRatesInst.address, weth.address, 0, true, admin),
-        "kyberNetwork 0"
+        "nimbleNetwork 0"
       )
     });
 
@@ -1909,7 +1909,7 @@ contract('NimbleFprReserveV2', function(accounts) {
         true,
         admin
       );
-      Helper.assertEqual(await reserve.kyberNetwork(), network);
+      Helper.assertEqual(await reserve.nimbleNetwork(), network);
       Helper.assertEqual(await reserve.conversionRatesContract(), convRatesInst.address);
       Helper.assertEqual(await reserve.sanityRatesContract(), zeroAddress);
       Helper.assertEqual(await reserve.weth(), weth.address);
@@ -2308,7 +2308,7 @@ contract('NimbleFprReserveV2', function(accounts) {
     it("Test set contract functions revert params are invalid", async() => {
       await expectRevert(
         reserve.setNimbleNetwork(zeroAddress),
-        "kyberNetwork 0"
+        "nimbleNetwork 0"
       );
       await expectRevert(
         reserve.setConversionRate(zeroAddress, {from: admin}),
@@ -2322,17 +2322,17 @@ contract('NimbleFprReserveV2', function(accounts) {
       await reserve.setSanityRate(zeroAddress, {from: admin});
     });
 
-    it("Test set kyberNetwork successful, data changes, event emits", async() => {
+    it("Test set nimbleNetwork successful, data changes, event emits", async() => {
       let tx = await reserve.setNimbleNetwork(network, {from: admin});
       expectEvent(tx, "SetNimbleNetworkAddress", {
         network: network,
       });
-      Helper.assertEqual(network, await reserve.kyberNetwork());
+      Helper.assertEqual(network, await reserve.nimbleNetwork());
       tx = await reserve.setNimbleNetwork(accounts[0], {from: admin});
       expectEvent(tx, "SetNimbleNetworkAddress", {
         network: accounts[0],
       });
-      Helper.assertEqual(accounts[0], await reserve.kyberNetwork());
+      Helper.assertEqual(accounts[0], await reserve.nimbleNetwork());
       await reserve.setNimbleNetwork(network, {from: admin});
     });
 

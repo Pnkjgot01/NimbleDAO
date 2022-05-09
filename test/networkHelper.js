@@ -53,20 +53,20 @@ module.exports.setupStorage = setupStorage;
 async function setupStorage(admin) {
     let networkHistory = await NimbleHistory.new(admin);
     let feeHandlerHistory = await NimbleHistory.new(admin);
-    let kyberDaoHistory = await NimbleHistory.new(admin);
+    let nimbleDaoHistory = await NimbleHistory.new(admin);
     let matchingEngineHistory = await NimbleHistory.new(admin);
-    kyberStorage = await NimbleStorage.new(
+    nimbleStorage = await NimbleStorage.new(
         admin,
         networkHistory.address,
         feeHandlerHistory.address,
-        kyberDaoHistory.address,
+        nimbleDaoHistory.address,
         matchingEngineHistory.address
         );
-    await networkHistory.setStorageContract(kyberStorage.address, {from: admin});
-    await feeHandlerHistory.setStorageContract(kyberStorage.address, {from: admin});
-    await kyberDaoHistory.setStorageContract(kyberStorage.address, {from: admin});
-    await matchingEngineHistory.setStorageContract(kyberStorage.address, {from: admin});
-    return kyberStorage;
+    await networkHistory.setStorageContract(nimbleStorage.address, {from: admin});
+    await feeHandlerHistory.setStorageContract(nimbleStorage.address, {from: admin});
+    await nimbleDaoHistory.setStorageContract(nimbleStorage.address, {from: admin});
+    await matchingEngineHistory.setStorageContract(nimbleStorage.address, {from: admin});
+    return nimbleStorage;
 }
 
 module.exports.setupReserves = setupReserves;
@@ -208,7 +208,7 @@ async function listTokenForRedeployNetwork(storageInstance, reserveInstances, to
 
 module.exports.setupNetwork = setupNetwork;
 async function setupNetwork
-    (NetworkArtifact, networkProxyAddress, KNCAddress, kyberDaoAddress, admin, operator) {
+    (NetworkArtifact, networkProxyAddress, NMBAddress, nimbleDaoAddress, admin, operator) {
     const storage =  await setupStorage(admin);
     const network = await NetworkArtifact.new(admin, storage.address);
     await storage.setNetworkContract(network.address, {from: admin});
@@ -221,11 +221,11 @@ async function setupNetwork
     await storage.setFeeAccountedPerReserveType(true, true, true, false, true, true, { from: admin });
     await storage.setEntitledRebatePerReserveType(true, false, true, false, true, true, {from: admin});
 
-    let feeHandler = await FeeHandler.new(admin, network.address, network.address, KNCAddress, burnBlockInterval, admin);
-    feeHandler.setDaoContract(kyberDaoAddress, {from: admin});
+    let feeHandler = await FeeHandler.new(admin, network.address, network.address, NMBAddress, burnBlockInterval, admin);
+    feeHandler.setDaoContract(nimbleDaoAddress, {from: admin});
     await network.setContracts(feeHandler.address, matchingEngine.address, zeroAddress, { from: admin });
     // set NimbleDao contract
-    await network.setNimbleDaoContract(kyberDaoAddress, { from: admin });
+    await network.setNimbleDaoContract(nimbleDaoAddress, { from: admin });
     // point proxy to network
     await network.addNimbleProxy(networkProxyAddress, { from: admin });
     //set params, enable network

@@ -160,8 +160,8 @@ const depositAddresses = [];
 let maxGasPrice = 50 * 1000 * 1000 * 1000;
 let negDiffInBps = 15;
 let minExpectedRateSlippage = 300;
-let kncWallet;
-let kncToEthRate = 307;
+let nmbWallet;
+let nmbToEthRate = 307;
 let validDurationBlock = 24;
 let taxWalletAddress = 0x0;
 let taxFeesBps = 1000;
@@ -222,8 +222,8 @@ function parseInput( jsonInput ) {
     maxGasPrice =  web3.utils.toBN(jsonInput["max gas price"]);
     negDiffInBps = web3.utils.toBN(jsonInput["neg diff in bps"]);
     minExpectedRateSlippage = web3.utils.toBN(jsonInput["min expected rate slippage"]);
-    kncWallet = jsonInput["KNC wallet"];
-    kncToEthRate = web3.utils.toBN(jsonInput["KNC to ETH rate"]);
+    nmbWallet = jsonInput["NMB wallet"];
+    nmbToEthRate = web3.utils.toBN(jsonInput["NMB to ETH rate"]);
     taxFeesBps = jsonInput["tax fees bps"];
     taxWalletAddress = jsonInput["tax wallet address"];
     validDurationBlock = web3.utils.toBN(jsonInput["valid duration block"]);
@@ -279,13 +279,13 @@ async function main() {
     }
 
 
-    console.log("deploying kyber network");
+    console.log("deploying nimble network");
     [proxyAddress, proxyContract] = await deployContract(output, "NimbleNetworkProxy.sol:NimbleNetworkProxy", [sender]);
-    console.log("deploying kyber network");
+    console.log("deploying nimble network");
     [internalNetworkAddress,internalNetworkContract] = await deployContract(output, "NimbleNetwork.sol:NimbleNetwork", [sender]);
     console.log("deploying conversion rates");
     [conversionRatesAddress,conversionRatesContract] = await deployContract(output, "ConversionRates.sol:ConversionRates", [sender]);
-    console.log("deploying kyber reserve");
+    console.log("deploying nimble reserve");
     [reserveAddress,reserveContract] = await deployContract(output, "NimbleReserve.sol:NimbleReserve", [internalNetworkAddress,conversionRatesAddress,sender]);
     console.log("deploying fee burner");
     [feeBurnerAddress, feeBurnerContract] = await deployContract(output, "FeeBurner.sol:FeeBurner", [sender,"0xdd974D5C2e2928deA5F71b9825b8b646686BD200",internalNetworkAddress]);
@@ -440,9 +440,9 @@ async function main() {
     console.log("burn fee - set reserve data");
     await sendTx(feeBurnerContract.methods.setReserveData(reserveAddress,
                                                         25,
-                                                        kncWallet));
-    console.log("set KNC to ETH rate");
-    await sendTx(feeBurnerContract.methods.setKNCRate(kncToEthRate));
+                                                        nmbWallet));
+    console.log("set NMB to ETH rate");
+    await sendTx(feeBurnerContract.methods.setNMBRate(nmbToEthRate));
     console.log("set tax fees bps");
     await sendTx(feeBurnerContract.methods.setTaxInBps(taxFeesBps));
     if(taxWalletAddress != '' && taxWalletAddress != 0) {
@@ -544,8 +544,8 @@ function printParams(jsonInput) {
     dictOutput["max gas price"] = jsonInput["max gas price"];
     dictOutput["neg diff in bps"] = jsonInput["neg diff in bps"];
     dictOutput["min expected rate slippage"] = jsonInput["min expected rate slippage"];
-    dictOutput["KNC wallet"] = kncWallet;
-    dictOutput["KNC to ETH rate"] = jsonInput["KNC to ETH rate"];
+    dictOutput["NMB wallet"] = nmbWallet;
+    dictOutput["NMB to ETH rate"] = jsonInput["NMB to ETH rate"];
     dictOutput["tax wallet address"] = jsonInput["tax wallet address"];
     dictOutput["tax fees bps"] = jsonInput["tax fees bps"];
     dictOutput["valid duration block"] = jsonInput["valid duration block"];

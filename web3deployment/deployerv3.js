@@ -96,7 +96,7 @@ async function deployContract(solcOutput, contractName, ctorArgs) {
 
 //token addresses
 let dgxTokenAddress;
-let kncTokenAddress;
+let nmbTokenAddress;
 let wethTokenAddress;
 
 //contract addresses
@@ -138,7 +138,7 @@ class Reserve {
   constructor(jsonInput) {
     this.address = jsonInput["address"];
     this.fees = jsonInput["fees"];
-    this.wallet = jsonInput["KNCWallet"];
+    this.wallet = jsonInput["NMBWallet"];
     this.tokens = jsonInput["tokens"];
   }
 }
@@ -181,10 +181,10 @@ function parseInput( jsonInput ) {
     defaultWalletFeesBps = jsonInput["default wallet fees bps"].toString();
     taxFeesBps = jsonInput["tax fees bps"].toString();
     taxWalletAddress = jsonInput["tax wallet address"];
-    initialKncToEthRatePrecision = jsonInput["KNC to ETH rate"].toString();
+    initialnmbToEthRatePrecision = jsonInput["NMB to ETH rate"].toString();
 
     dgxTokenAddress = jsonInput["addresses"].dgx;
-    kncTokenAddress = jsonInput["addresses"].knc;
+    nmbTokenAddress = jsonInput["addresses"].nmb;
     wethTokenAddress = jsonInput["addresses"].weth;
     medianizerAddress = jsonInput["addresses"].medianizer;
     proxyAddress = jsonInput["addresses"].proxy;
@@ -291,16 +291,16 @@ async function waitForEth() {
 }
 
 async function deployAllContacts(output) {
-  console.log("deploying kyber network");
+  console.log("deploying nimble network");
   [networkAddress,networkContract] = await deployContract(output, "NimbleNetwork.sol:NimbleNetwork", [sender]);
   console.log("network", networkAddress);
 
   console.log("deploying fee burner");
-  [feeBurnerAddress, feeBurnerContract] = await deployContract(output, "FeeBurner.sol:FeeBurner", [sender,kncTokenAddress,networkAddress, initialKncToEthRatePrecision]);
+  [feeBurnerAddress, feeBurnerContract] = await deployContract(output, "FeeBurner.sol:FeeBurner", [sender,nmbTokenAddress,networkAddress, initialnmbToEthRatePrecision]);
   console.log("fee burner", feeBurnerAddress);
 
   console.log("deploying expected rates");
-  [expectedRateAddress, expectedRateContract] = await deployContract(output, "ExpectedRate.sol:ExpectedRate", [networkAddress,kncTokenAddress,sender]);
+  [expectedRateAddress, expectedRateContract] = await deployContract(output, "ExpectedRate.sol:ExpectedRate", [networkAddress,nmbTokenAddress,sender]);
   console.log("expected rate", expectedRateAddress);
 
   console.log("deploy orderbook factory");
@@ -314,7 +314,7 @@ async function deployAllContacts(output) {
         networkAddress,
         factoryAddress,
         medianizerAddress,
-        kncTokenAddress,
+        nmbTokenAddress,
         [dgxTokenAddress, wethTokenAddress],
         maxOrdersPerTrade,
         minOrderValueUsd
@@ -422,8 +422,8 @@ async function configureAndEnableNetwork() {
 
 async function configureFeeBurner() {
   // burn fee
-  console.log("set KNC to ETH rate");
-  await sendTx(feeBurnerContract.methods.setKNCRate());
+  console.log("set NMB to ETH rate");
+  await sendTx(feeBurnerContract.methods.setNMBRate());
   if (taxFeesBps != 0) {
     console.log("set tax fees bps");
     await sendTx(feeBurnerContract.methods.setTaxInBps(taxFeesBps));

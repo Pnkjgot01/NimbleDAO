@@ -19,8 +19,8 @@ contract NimbleStaking is INimbleStaking, EpochUtils, ReentrancyGuard {
         address representative;
     }
 
-    IERC20 public immutable kncToken;
-    INimbleDao public immutable kyberDao;
+    IERC20 public immutable nmbToken;
+    INimbleDao public immutable nimbleDao;
 
     // staker data per epoch, including stake, delegated stake and representative
     mapping(uint256 => mapping(address => StakerData)) internal stakerPerEpochData;
@@ -34,20 +34,20 @@ contract NimbleStaking is INimbleStaking, EpochUtils, ReentrancyGuard {
     event WithdrawDataUpdateFailed(uint256 curEpoch, address staker, uint256 amount);
 
     constructor(
-        IERC20 _kncToken,
+        IERC20 _nmbToken,
         uint256 _epochPeriod,
         uint256 _startTimestamp,
-        INimbleDao _kyberDao
+        INimbleDao _nimbleDao
     ) public {
         require(_epochPeriod > 0, "ctor: epoch period is 0");
         require(_startTimestamp >= now, "ctor: start in the past");
-        require(_kncToken != IERC20(0), "ctor: kncToken 0");
-        require(_kyberDao != INimbleDao(0), "ctor: kyberDao 0");
+        require(_nmbToken != IERC20(0), "ctor: nmbToken 0");
+        require(_nimbleDao != INimbleDao(0), "ctor: nimbleDao 0");
 
         epochPeriodInSeconds = _epochPeriod;
         firstEpochStartTimestamp = _startTimestamp;
-        kncToken = _kncToken;
-        kyberDao = _kyberDao;
+        nmbToken = _nmbToken;
+        nimbleDao = _nimbleDao;
     }
 
     /**
@@ -96,8 +96,8 @@ contract NimbleStaking is INimbleStaking, EpochUtils, ReentrancyGuard {
     }
 
     /**
-     * @dev call to stake more KNC for msg.sender
-     * @param amount amount of KNC to stake
+     * @dev call to stake more NMB for msg.sender
+     * @param amount amount of NMB to stake
      */
     function deposit(uint256 amount) external override {
         require(amount > 0, "deposit: amount is 0");
@@ -105,9 +105,9 @@ contract NimbleStaking is INimbleStaking, EpochUtils, ReentrancyGuard {
         uint256 curEpoch = getCurrentEpochNumber();
         address staker = msg.sender;
 
-        // collect KNC token from staker
+        // collect NMB token from staker
         require(
-            kncToken.transferFrom(staker, address(this), amount),
+            nmbToken.transferFrom(staker, address(this), amount),
             "deposit: can not get token"
         );
 
@@ -132,8 +132,8 @@ contract NimbleStaking is INimbleStaking, EpochUtils, ReentrancyGuard {
     }
 
     /**
-     * @dev call to withdraw KNC from staking, it could affect reward when calling NimbleDao handleWithdrawal
-     * @param amount amount of KNC to withdraw
+     * @dev call to withdraw NMB from staking, it could affect reward when calling NimbleDao handleWithdrawal
+     * @param amount amount of NMB to withdraw
      */
     function withdraw(uint256 amount) external override nonReentrant {
         require(amount > 0, "withdraw: amount is 0");
@@ -161,8 +161,8 @@ contract NimbleStaking is INimbleStaking, EpochUtils, ReentrancyGuard {
 
         stakerLatestData[staker].stake = stakerLatestData[staker].stake.sub(amount);
 
-        // transfer KNC back to staker
-        require(kncToken.transfer(staker, amount), "withdraw: can not transfer knc");
+        // transfer NMB back to staker
+        require(nmbToken.transfer(staker, amount), "withdraw: can not transfer nmb");
         emit Withdraw(curEpoch, staker, amount);
     }
 
@@ -181,8 +181,8 @@ contract NimbleStaking is INimbleStaking, EpochUtils, ReentrancyGuard {
         )
     {
         require(
-            msg.sender == address(kyberDao),
-            "initAndReturnData: only kyberDao"
+            msg.sender == address(nimbleDao),
+            "initAndReturnData: only nimbleDao"
         );
 
         uint256 curEpoch = getCurrentEpochNumber();
@@ -384,9 +384,9 @@ contract NimbleStaking is INimbleStaking, EpochUtils, ReentrancyGuard {
             }
             stakerPerEpochData[curEpoch][staker].stake = newStake;
             // call NimbleDao to reduce reward, if staker has delegated, then pass his representative
-            if (address(kyberDao) != address(0)) {
+            if (address(nimbleDao) != address(0)) {
                 // don't revert if NimbleDao revert so data will be updated correctly
-                (bool success, ) = address(kyberDao).call(
+                (bool success, ) = address(nimbleDao).call(
                     abi.encodeWithSignature(
                         "handleWithdrawal(address,uint256)",
                         representative,

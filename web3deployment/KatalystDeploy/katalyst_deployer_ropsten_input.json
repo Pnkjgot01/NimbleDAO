@@ -14,7 +14,7 @@
             "decimals": 18,
             "address": "0xad6d458402f60fd3bd25163575031acdce07538d"
         },
-        "KNC": {
+        "NMB": {
             "name": "NimbleNetwork",
             "decimals": 18,
             "address": "0x7b2810576aa1cce68f2b118cef1f36467c648f92"
@@ -27,7 +27,7 @@
     },
 
     "addresses": {
-        "knc": "0x7b2810576aa1cce68f2b118cef1f36467c648f92",
+        "nmb": "0x7b2810576aa1cce68f2b118cef1f36467c648f92",
         "gasHelper": "0x0000000000000000000000000000000000000000"
     },
 

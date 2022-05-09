@@ -19,29 +19,29 @@ contract NimbleFeeHandlerWrapper is DaoOperator {
     using SafeERC20 for IERC20;
 
     struct NimbleFeeHandlerData {
-        IFeeHandler kyberFeeHandler;
+        IFeeHandler nimbleFeeHandler;
         uint256 startEpoch;
     }
 
-    INimbleDao public immutable kyberDao;
+    INimbleDao public immutable nimbleDao;
     IERC20[] internal supportedTokens;
-    mapping(IERC20 => NimbleFeeHandlerData[]) internal kyberFeeHandlersPerToken;
+    mapping(IERC20 => NimbleFeeHandlerData[]) internal nimbleFeeHandlersPerToken;
     address public daoSetter;
 
-    event FeeHandlerAdded(IERC20 token, IFeeHandler kyberFeeHandler);
+    event FeeHandlerAdded(IERC20 token, IFeeHandler nimbleFeeHandler);
 
     constructor(
-        INimbleDao _kyberDao,
+        INimbleDao _nimbleDao,
         address _daoOperator
     ) public DaoOperator(_daoOperator) {
-        require(_kyberDao != INimbleDao(0), "kyberDao 0");
-        kyberDao = _kyberDao;
+        require(_nimbleDao != INimbleDao(0), "nimbleDao 0");
+        nimbleDao = _nimbleDao;
     }
 
-    function addFeeHandler(IERC20 _token, IFeeHandler _kyberFeeHandler) external onlyDaoOperator {
+    function addFeeHandler(IERC20 _token, IFeeHandler _nimbleFeeHandler) external onlyDaoOperator {
         addTokenToSupportedTokensArray(_token);
-        addFeeHandlerToNimbleFeeHandlerArray(kyberFeeHandlersPerToken[_token], _kyberFeeHandler);
-        emit FeeHandlerAdded(_token, _kyberFeeHandler);
+        addFeeHandlerToNimbleFeeHandlerArray(nimbleFeeHandlersPerToken[_token], _nimbleFeeHandler);
+        emit FeeHandlerAdded(_token, _nimbleFeeHandler);
     }
 
     /// @dev claim from multiple feeHandlers
@@ -73,20 +73,20 @@ contract NimbleFeeHandlerWrapper is DaoOperator {
             supportedTokens.length : endTokenIndex;
 
         for (uint256 i = startTokenIndex; i < endTokenId; i++) {
-            NimbleFeeHandlerData[] memory kyberFeeHandlerArray = kyberFeeHandlersPerToken[supportedTokens[i]];
-            uint256 endNimbleFeeHandlerId = (endNimbleFeeHandlerIndex >= kyberFeeHandlerArray.length) ?
-                kyberFeeHandlerArray.length - 1: endNimbleFeeHandlerIndex - 1;
+            NimbleFeeHandlerData[] memory nimbleFeeHandlerArray = nimbleFeeHandlersPerToken[supportedTokens[i]];
+            uint256 endNimbleFeeHandlerId = (endNimbleFeeHandlerIndex >= nimbleFeeHandlerArray.length) ?
+                nimbleFeeHandlerArray.length - 1: endNimbleFeeHandlerIndex - 1;
             require(endNimbleFeeHandlerId >= startNimbleFeeHandlerIndex, "bad array indices");
             amounts = new uint256[](endNimbleFeeHandlerId - startNimbleFeeHandlerIndex + 1);
 
             // iteration starts from endIndex, differs from claiming reserve rebates and platform wallets
             for (uint256 j = endNimbleFeeHandlerId; j >= startNimbleFeeHandlerIndex; j--) {
-                NimbleFeeHandlerData memory kyberFeeHandlerData = kyberFeeHandlerArray[j];
-                if (kyberFeeHandlerData.startEpoch < epoch) {
-                    amounts[j] = kyberFeeHandlerData.kyberFeeHandler.claimStakerReward(staker, epoch);
+                NimbleFeeHandlerData memory nimbleFeeHandlerData = nimbleFeeHandlerArray[j];
+                if (nimbleFeeHandlerData.startEpoch < epoch) {
+                    amounts[j] = nimbleFeeHandlerData.nimbleFeeHandler.claimStakerReward(staker, epoch);
                     break;
-                } else if (kyberFeeHandlerData.startEpoch == epoch) {
-                    amounts[j] = kyberFeeHandlerData.kyberFeeHandler.claimStakerReward(staker, epoch);
+                } else if (nimbleFeeHandlerData.startEpoch == epoch) {
+                    amounts[j] = nimbleFeeHandlerData.nimbleFeeHandler.claimStakerReward(staker, epoch);
                 }
 
                 if (j == 0) {
@@ -124,14 +124,14 @@ contract NimbleFeeHandlerWrapper is DaoOperator {
             supportedTokens.length : endTokenIndex;
 
         for (uint256 i = startTokenIndex; i < endTokenId; i++) {
-            NimbleFeeHandlerData[] memory kyberFeeHandlerArray = kyberFeeHandlersPerToken[supportedTokens[i]];
-            uint256 endNimbleFeeHandlerId = (endNimbleFeeHandlerIndex >= kyberFeeHandlerArray.length) ?
-                kyberFeeHandlerArray.length : endNimbleFeeHandlerIndex;
+            NimbleFeeHandlerData[] memory nimbleFeeHandlerArray = nimbleFeeHandlersPerToken[supportedTokens[i]];
+            uint256 endNimbleFeeHandlerId = (endNimbleFeeHandlerIndex >= nimbleFeeHandlerArray.length) ?
+                nimbleFeeHandlerArray.length : endNimbleFeeHandlerIndex;
             require(endNimbleFeeHandlerId >= startNimbleFeeHandlerIndex, "bad array indices");
             amounts = new uint256[](endNimbleFeeHandlerId - startNimbleFeeHandlerIndex + 1);
             
             for (uint256 j = startNimbleFeeHandlerIndex; j < endNimbleFeeHandlerId; j++) {
-                IFeeHandler feeHandler = kyberFeeHandlerArray[j].kyberFeeHandler;
+                IFeeHandler feeHandler = nimbleFeeHandlerArray[j].nimbleFeeHandler;
                 if (feeHandler.rebatePerWallet(rebateWallet) > 1) {
                     amounts[j] = feeHandler.claimReserveRebate(rebateWallet);
                 }
@@ -167,14 +167,14 @@ contract NimbleFeeHandlerWrapper is DaoOperator {
             supportedTokens.length : endTokenIndex;
 
         for (uint256 i = startTokenIndex; i < endTokenId; i++) {
-            NimbleFeeHandlerData[] memory kyberFeeHandlerArray = kyberFeeHandlersPerToken[supportedTokens[i]];
-            uint256 endNimbleFeeHandlerId = (endNimbleFeeHandlerIndex >= kyberFeeHandlerArray.length) ?
-                kyberFeeHandlerArray.length : endNimbleFeeHandlerIndex;
+            NimbleFeeHandlerData[] memory nimbleFeeHandlerArray = nimbleFeeHandlersPerToken[supportedTokens[i]];
+            uint256 endNimbleFeeHandlerId = (endNimbleFeeHandlerIndex >= nimbleFeeHandlerArray.length) ?
+                nimbleFeeHandlerArray.length : endNimbleFeeHandlerIndex;
             require(endNimbleFeeHandlerId >= startNimbleFeeHandlerIndex, "bad array indices");
             amounts = new uint256[](endNimbleFeeHandlerId - startNimbleFeeHandlerIndex + 1);
 
             for (uint256 j = startNimbleFeeHandlerIndex; j < endNimbleFeeHandlerId; j++) {
-                IFeeHandler feeHandler = kyberFeeHandlerArray[j].kyberFeeHandler;
+                IFeeHandler feeHandler = nimbleFeeHandlerArray[j].nimbleFeeHandler;
                 if (feeHandler.feePerPlatformWallet(platformWallet) > 1) {
                     amounts[j] = feeHandler.claimPlatformFee(platformWallet);
                 }
@@ -183,16 +183,16 @@ contract NimbleFeeHandlerWrapper is DaoOperator {
     }
 
     function getNimbleFeeHandlersPerToken(IERC20 token) external view returns (
-        IFeeHandler[] memory kyberFeeHandlers,
+        IFeeHandler[] memory nimbleFeeHandlers,
         uint256[] memory epochs
         )
     {
-        NimbleFeeHandlerData[] storage kyberFeeHandlerData = kyberFeeHandlersPerToken[token];
-        kyberFeeHandlers = new IFeeHandler[](kyberFeeHandlerData.length);
-        epochs = new uint256[](kyberFeeHandlerData.length);
-        for (uint i = 0; i < kyberFeeHandlerData.length; i++) {
-            kyberFeeHandlers[i] = kyberFeeHandlerData[i].kyberFeeHandler;
-            epochs[i] = kyberFeeHandlerData[i].startEpoch;
+        NimbleFeeHandlerData[] storage nimbleFeeHandlerData = nimbleFeeHandlersPerToken[token];
+        nimbleFeeHandlers = new IFeeHandler[](nimbleFeeHandlerData.length);
+        epochs = new uint256[](nimbleFeeHandlerData.length);
+        for (uint i = 0; i < nimbleFeeHandlerData.length; i++) {
+            nimbleFeeHandlers[i] = nimbleFeeHandlerData[i].nimbleFeeHandler;
+            epochs[i] = nimbleFeeHandlerData[i].startEpoch;
         }
     }
     
@@ -212,19 +212,19 @@ contract NimbleFeeHandlerWrapper is DaoOperator {
     }
 
     function addFeeHandlerToNimbleFeeHandlerArray(
-        NimbleFeeHandlerData[] storage kyberFeeHandlerArray,
-        IFeeHandler _kyberFeeHandler
+        NimbleFeeHandlerData[] storage nimbleFeeHandlerArray,
+        IFeeHandler _nimbleFeeHandler
     ) internal {
         uint256 i;
-        for (i = 0; i < kyberFeeHandlerArray.length; i++) {
-            if (_kyberFeeHandler == kyberFeeHandlerArray[i].kyberFeeHandler) {
+        for (i = 0; i < nimbleFeeHandlerArray.length; i++) {
+            if (_nimbleFeeHandler == nimbleFeeHandlerArray[i].nimbleFeeHandler) {
                 // already added, return
                 return;
             }
         }
-        kyberFeeHandlerArray.push(NimbleFeeHandlerData({
-            kyberFeeHandler: _kyberFeeHandler,
-            startEpoch: kyberDao.getCurrentEpochNumber()
+        nimbleFeeHandlerArray.push(NimbleFeeHandlerData({
+            nimbleFeeHandler: _nimbleFeeHandler,
+            startEpoch: nimbleDao.getCurrentEpochNumber()
             })
         );
     }

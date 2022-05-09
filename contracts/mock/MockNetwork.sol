@@ -5,25 +5,25 @@ import "../NimbleNetwork.sol";
 
 // override some of original NimbleNetwork contract
 contract MockNetwork is NimbleNetwork {
-    constructor(address _admin, INimbleStorage _kyberStorage)
+    constructor(address _admin, INimbleStorage _nimbleStorage)
         public
-        NimbleNetwork(_admin, _kyberStorage)
+        NimbleNetwork(_admin, _nimbleStorage)
     {}
 
     // allow set zero contract
     function setContracts(
-        INimbleFeeHandler _kyberFeeHandler,
-        INimbleMatchingEngine _kyberMatchingEngine,
+        INimbleFeeHandler _nimbleFeeHandler,
+        INimbleMatchingEngine _nimbleMatchingEngine,
         IGasHelper _gasHelper
     ) external override {
-        if (kyberFeeHandler != _kyberFeeHandler) {
-            kyberFeeHandler = _kyberFeeHandler;
-            emit NimbleFeeHandlerUpdated(_kyberFeeHandler);
+        if (nimbleFeeHandler != _nimbleFeeHandler) {
+            nimbleFeeHandler = _nimbleFeeHandler;
+            emit NimbleFeeHandlerUpdated(_nimbleFeeHandler);
         }
 
-        if (kyberMatchingEngine != _kyberMatchingEngine) {
-            kyberMatchingEngine = _kyberMatchingEngine;
-            emit NimbleMatchingEngineUpdated(_kyberMatchingEngine);
+        if (nimbleMatchingEngine != _nimbleMatchingEngine) {
+            nimbleMatchingEngine = _nimbleMatchingEngine;
+            emit NimbleMatchingEngineUpdated(_nimbleMatchingEngine);
         }
 
         if ((_gasHelper != IGasHelper(0)) && (_gasHelper != gasHelper)) {
