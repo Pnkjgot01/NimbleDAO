@@ -26,7 +26,7 @@
     "@ethereumjs/tx": "^3.5.1",
     "@ethereumjs/vm": "^5.9.0",
     "@nomiclabs/eth-sig-util": "^2.4.4",
-    "@openzeppelin/contracts": "^4.6.0",
+    "@openzeppelin/contracts": "^4.8.3",
     "@polkadot/trie-db": "^1.8.1",
     "async": "^3.2.3",
     "eth-json-rpc-infura": "^5.1.0",
